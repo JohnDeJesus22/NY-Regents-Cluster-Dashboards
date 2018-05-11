@@ -28,10 +28,13 @@ gcoc=geo[geo.Cluster=='G-CO.C']
 gcoc['freq']=gcoc.groupby('Regents Date')['Regents Date'].transform('count')
 
 #convert Regents Date column to date time
-gcoc['Regents Date']=pd.to_datetime(gcoc['Regents Date'])
+gcoc['Regents Date']=pd.to_datetime(gcoc['Regents Date'],format='%m/%d/%Y')
 
 #drop duplicate dates
 gcoc=gcoc.drop_duplicates(subset=['Regents Date'],keep='first')
+
+#sort by date
+gcoc=gcoc.sort_values(by=['Regents Date'])
 
 #create app
 app.layout=html.Div(children=[
@@ -56,13 +59,13 @@ app.layout=html.Div(children=[
                 #line chart 
                 dcc.Graph(id='line chart',
                           figure={'data':[
-                                  {'x':geo['Regents Date'],
+                                  {'x':gcoc['Regents Date'],
                                    'y':gcoc['freq'],
                                    'type':'scatter',
                                    'mode':'lines'}],
                                   'layout':{'title':'<b>G-CO.C Line chart</b>',
-                                           'xaxis':{'title': '<b>Number of Questions</b>'},
-                                     'yaxis':{'title': '<b>Regents Exam Date</b>'}
+                                           'xaxis':{'title': '<b>Regents Exam Date</b>'},
+                                     'yaxis':{'title': '<b>Number of Questions</b>'}
                                      }})],
 style={'backgroundColor':'#EAEAD2'}
 )
