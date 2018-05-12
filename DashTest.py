@@ -36,6 +36,10 @@ gcoc=gcoc.drop_duplicates(subset=['Regents Date'],keep='first')
 #sort by date
 gcoc=gcoc.sort_values(by=['Regents Date'])
 
+markdown_text='''
+                Hey there everyone. I am testing out some `markdown`. Check out more of what
+                I do at my [blog](http://www.jddata22.com/).
+                             '''
 #create app
 app.layout=html.Div(children=[
                 #main title
@@ -52,10 +56,20 @@ app.layout=html.Div(children=[
                                   'layout':{
                                     'plot_bgcolor':'#EAEAD2',
                                     'paper_bgcolor':'#EAEAD2',
+                                    'hovermode':'closest',
                                      'title':'<b>Cluster Bar Chart</b>',
                                      'xaxis':{'title': '<b>Cluster Codes</b>'},
                                      'yaxis':{'title': '<b>Total Number of Questions</b>'}}
                                       }),
+                #markdown test
+                dcc.Markdown(children=markdown_text),
+                #drop down test. value=default value displayed
+                dcc.Dropdown(
+    options=[
+        {'label': 'Geometry Basics', 'value': 'G-CO.C'},
+        {'label': 'Basic Trigonometry', 'value': 'SRT-C'},
+        {'label': 'Modeling with Geometry', 'value': 'G-gMD.B'}
+    ],value='Geometry Basics'),
                 #line chart 
                 dcc.Graph(id='line chart',
                           figure={'data':[
@@ -64,6 +78,7 @@ app.layout=html.Div(children=[
                                    'type':'scatter',
                                    'mode':'lines'}],
                                   'layout':{'title':'<b>G-CO.C Line chart</b>',
+                                            'hovermode':'closest',
                                            'xaxis':{'title': '<b>Regents Exam Date</b>'},
                                      'yaxis':{'title': '<b>Number of Questions</b>'}
                                      }})],
