@@ -16,6 +16,9 @@ app=dash.Dash()
 os.chdir('D:\\MathRegentsDataFiles')
 geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1')
 
+#create df grouped by question type and cluster.
+type_group=geo.groupby(['Type', 'Cluster']).size().reset_index(name='counts')
+
 #create freq column for clusters
 geo['freq']=geo.groupby('Cluster')['Cluster'].transform('count')
 
@@ -81,7 +84,26 @@ app.layout=html.Div(children=[
                                             'hovermode':'closest',
                                            'xaxis':{'title': '<b>Regents Exam Date</b>'},
                                      'yaxis':{'title': '<b>Number of Questions</b>'}
-                                     }})],
+                                     }}),
+                dcc.Graph(id='double bar',
+                          figure={'data':[
+                                  {'x':type_group['Cluster'][type_group.Type=='MC'],
+                                  'y':type_group['counts'][type_group.Type=='MC'],
+                                  'type':'bar',
+                                  'name':'MC'},
+                                   {'x':type_group['Cluster'][type_group.Type=='CR'],
+                                  'y':type_group['counts'][type_group.Type=='CR'],
+                                  'type':'bar',
+                                  'name':'CR'}
+                                    ],
+                                  'layout':{
+                                'barmode':'stack',
+                                'plot_bgcolor':'#EAEAD2',
+                                    'paper_bgcolor':'#EAEAD2',
+                                    'hovermode':'closest',
+                                     'title':'<b>Cluster Bar Chart by type</b>',
+                                     'xaxis':{'title': '<b>Cluster Codes</b>'},
+                                     'yaxis':{'title': '<b>Total Number of Questions</b>'}}})],
 style={'backgroundColor':'#EAEAD2'}
 )
 
