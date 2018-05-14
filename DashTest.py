@@ -4,10 +4,12 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output
 from plotly.graph_objs import *
 import os
 import pandas as pd
 import numpy as np
+import datetime
 
 #initiate app
 app=dash.Dash()
@@ -39,10 +41,12 @@ gcoc=gcoc.drop_duplicates(subset=['Regents Date'],keep='first')
 #sort by date
 gcoc=gcoc.sort_values(by=['Regents Date'])
 
-markdown_text='''
-                Hey there everyone. I am testing out some `markdown`. Check out more of what
-                I do at my [blog](http://www.jddata22.com/).
-                             '''
+#exam options for first bar chart
+#geo['Regents Date']=pd.to_datetime(geo['Regents Date'],format='%m/%d/%Y')
+exam_options=[]
+for exam in sorted(geo['Regents Date'].unique()):
+    exam_options.append({'label': exam,'value':exam})
+
 #create app
 app.layout=html.Div(children=[
                 #main title
@@ -50,8 +54,12 @@ app.layout=html.Div(children=[
                 #subtitle
                 html.Div(children='First Test Chart of Cluster Analysis',
                 style={'textAlign':'center'}),
+                #dropdown for simple bar chart
+                dcc.Dropdown(id='exam_selector',
+                        options=exam_options,
+                        value=geo['Regents Date'].min()),
                 #Bar Chart
-                dcc.Graph(id='example',
+                dcc.Graph(id='overall',
                           figure={'data':[
                                   {'x': geo['Cluster'],
                                     'y':geo['freq'],
@@ -64,15 +72,6 @@ app.layout=html.Div(children=[
                                      'xaxis':{'title': '<b>Cluster Codes</b>'},
                                      'yaxis':{'title': '<b>Total Number of Questions</b>'}}
                                       }),
-                #markdown test
-                dcc.Markdown(children=markdown_text),
-                #drop down test. value=default value displayed
-                dcc.Dropdown(
-    options=[
-        {'label': 'Geometry Basics', 'value': 'G-CO.C'},
-        {'label': 'Basic Trigonometry', 'value': 'SRT-C'},
-        {'label': 'Modeling with Geometry', 'value': 'G-gMD.B'}
-    ],value='Geometry Basics'),
                 #line chart 
                 dcc.Graph(id='line chart',
                           figure={'data':[
@@ -106,6 +105,28 @@ app.layout=html.Div(children=[
                                      'yaxis':{'title': '<b>Total Number of Questions</b>'}}})],
 style={'backgroundColor':'#EAEAD2'}
 )
+    
+@app.callback(Output('overall','figure'),
+              [Input('exam_selector','value')])
+def update_simple_bar(selected_exam):
+
+    #data only for selected exam
+    filtered_exam=geo[geo['Regents Date']==selected_exam]
+    
+    filtered_exam['freq']=filtered_exam.groupby('Cluster')['Cluster'].transform('count')
+    
+    new_trace=[{'x': filtered_exam['Cluster'],
+                'y':filtered_exam['freq'],
+                'type':'bar'}]
+    
+    return {'data': new_trace,
+            'layout':{
+                    'plot_bgcolor':'#EAEAD2',
+                    'paper_bgcolor':'#EAEAD2',
+                    'hovermode':'closest',
+                    'title':'<b>Cluster Bar Chart for </b>'+ selected_exam,
+                    'xaxis':{'title': '<b>Cluster Codes</b>'},
+                    'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
 
 #run when called in terminal
 if __name__=='__main__':
