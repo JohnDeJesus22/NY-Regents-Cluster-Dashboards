@@ -45,7 +45,11 @@ gcoc=gcoc.sort_values(by=['Regents Date'])
 #geo['Regents Date']=pd.to_datetime(geo['Regents Date'],format='%m/%d/%Y')
 exam_options=[]
 for exam in sorted(geo['Regents Date'].unique()):
-    exam_options.append({'label': exam,'value':exam})
+    exam_options.append({'label':exam,'value':exam})
+
+clusters=[]
+for cluster in sorted(geo['Cluster'].unique()):
+    clusters.append({'label':cluster,'value':cluster})
 
 #create app
 app.layout=html.Div(children=[
@@ -72,13 +76,17 @@ app.layout=html.Div(children=[
                                      'xaxis':{'title': '<b>Cluster Codes</b>'},
                                      'yaxis':{'title': '<b>Total Number of Questions</b>'}}
                                       }),
+                #line chart dropdown
+                dcc.Dropdown(id='cluster_selector',
+                             options=clusters,
+                             value='G-CO.C'),
                 #line chart 
                 dcc.Graph(id='line chart',
                           figure={'data':[
                                   {'x':gcoc['Regents Date'],
                                    'y':gcoc['freq'],
                                    'type':'scatter',
-                                   'mode':'lines'}],
+                                   'mode':'lines+markers'}],
                                   'layout':{'title':'<b>G-CO.C Line chart</b>',
                                             'hovermode':'closest',
                                            'xaxis':{'title': '<b>Regents Exam Date</b>'},
@@ -105,7 +113,10 @@ app.layout=html.Div(children=[
                                      'yaxis':{'title': '<b>Total Number of Questions</b>'}}})],
 style={'backgroundColor':'#EAEAD2'}
 )
-    
+ 
+#only seems to work if date format is unchanged. not sure why it isn't being picked up
+#here. Supposedly the label selected in drop down is inputted into the function below.
+
 @app.callback(Output('overall','figure'),
               [Input('exam_selector','value')])
 def update_simple_bar(selected_exam):
@@ -128,6 +139,37 @@ def update_simple_bar(selected_exam):
                     'xaxis':{'title': '<b>Cluster Codes</b>'},
                     'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
 
+
+#line chart filter
+@app.callback(Output('line chart','figure'),
+              [Input('cluster_selector','value')])
+def update_cluster_timeSeries(cluster):
+    
+    #data only for selected cluster
+    sel_cluster=geo[geo.Cluster==cluster]
+    sel_cluster['freq']=sel_cluster.groupby('Regents Date')['Regents Date'].transform('count')
+
+    #convert Regents Date column to date time
+    sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'],format='%m/%d/%Y')
+    
+    #drop duplicate dates
+    sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date'],keep='first')
+
+    #sort by date
+    sel_cluster=sel_cluster.sort_values(by=['Regents Date'])
+    
+    new_trace=[{'x': sel_cluster['Regents Date'],
+                'y':sel_cluster['freq'],
+                'type':'scatter',
+                'mode':'lines+markers'}]
+    
+    return {'data': new_trace,
+            'layout':{'title':'<b>Line Chart of </b>'+ cluster,
+                                            'hovermode':'closest',
+                                           'xaxis':{'title': '<b>Regents Exam Date</b>'},
+                                     'yaxis':{'title': '<b>Number of Questions</b>'}
+                                     }}
+    
 #run when called in terminal
 if __name__=='__main__':
     app.run_server()
