@@ -18,9 +18,6 @@ app=dash.Dash()
 os.chdir('D:\\MathRegentsDataFiles')
 geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1')
 
-#create df grouped by question type and cluster.
-type_group=geo.groupby(['Type', 'Cluster']).size().reset_index(name='counts')
-
 #exam options for first bar chart
 #geo['Regents Date']=pd.to_datetime(geo['Regents Date'],format='%m/%d/%Y')
 exam_options=[{'label':'All Exams','value':'All Exams'}]
@@ -29,22 +26,28 @@ for exam in sorted(geo['Regents Date'].unique()):
 
 #options for cluster dropdown
 clusters=[]
-for cluster in sorted(geo['Cluster'].unique()):
-    clusters.append({'label':cluster,'value':cluster})
+geo=geo.sort_values(by=['Cluster'])
+cluster_dict=dict(zip(geo['Cluster'].unique(),geo['ClusterTitle'].unique()))
+for cluster in cluster_dict:
+    clusters.append({'label':cluster+'-'+ cluster_dict.get(cluster),'value':cluster})
 
 #create app
 app.layout=html.Div(children=[
                 #main title
-                html.H1(children='First Dash App',style={'textAlign':'center'}),
+                html.H1(children='Geometry Regents Cluster Dashboard',
+                        style={'textAlign':'center'}),
                       
                 #subtitle
-                html.Div(children='First Test Chart of Cluster Analysis',
+                html.Div(children='First Test Dashboard of Geometry Regents Cluster Analysis',
                 style={'textAlign':'center'}),
                          
                 #dropdown for simple bar chart
                 dcc.Dropdown(id='exam_selector',
                         options=exam_options,
                         value='All Exams'),
+                
+                #DoubleBar of question types
+                dcc.Graph(id='double bar'),
                              
                 #Bar Chart
                 dcc.Graph(id='overall'),
@@ -57,26 +60,7 @@ app.layout=html.Div(children=[
                 #line chart 
                 dcc.Graph(id='line chart'),
                 
-                #Stacked bar of question types
-                dcc.Graph(id='double bar',
-                          figure={'data':[
-                                  {'x':type_group['Cluster'][type_group.Type=='MC'],
-                                  'y':type_group['counts'][type_group.Type=='MC'],
-                                  'type':'bar',
-                                  'name':'MC'},
-                                   {'x':type_group['Cluster'][type_group.Type=='CR'],
-                                  'y':type_group['counts'][type_group.Type=='CR'],
-                                  'type':'bar',
-                                  'name':'CR'}
-                                    ],
-                                  'layout':{
-                                'barmode':'stack',
-                                'plot_bgcolor':'#EAEAD2',
-                                    'paper_bgcolor':'#EAEAD2',
-                                    'hovermode':'closest',
-                                     'title':'<b>Cluster Bar Chart by type</b>',
-                                     'xaxis':{'title': '<b>Cluster Codes</b>'},
-                                     'yaxis':{'title': '<b>Total Number of Questions</b>'}}})],
+                ],
 style={'backgroundColor':'#EAEAD2'}
 )
  
@@ -148,6 +132,7 @@ def update_cluster_timeSeries(cluster):
     #sort by date
     sel_cluster=sel_cluster.sort_values(by=['Regents Date'])
     
+    #create trace
     new_trace=[{'x': sel_cluster['Regents Date'],
                 'y':sel_cluster['freq'],
                 'type':'scatter',
@@ -160,6 +145,55 @@ def update_cluster_timeSeries(cluster):
                                      'yaxis':{'title': '<b>Number of Questions</b>'}
                                      }}
     
+@app.callback(Output('double bar','figure'),
+              [Input('exam_selector','value')])
+def update_double_bar(selected_exam):
+    #create df grouped by question type,cluster, and exam
+    type_group=geo.groupby(['Type', 'Cluster', 'Regents Date']).size().reset_index(name='counts')
+    
+    #sort clusters alphabetically
+    type_group=type_group.sort_values(by=['Cluster'])
+    
+    if selected_exam =='All Exams':
+        stack_trace=[
+                {'x':type_group['Cluster'][type_group.Type=='MC'],
+                'y':type_group['counts'][type_group.Type=='MC'],
+                'type':'bar',
+                'name':'MC'},
+                 {'x':type_group['Cluster'][type_group.Type=='CR'],
+                  'y':type_group['counts'][type_group.Type=='CR'],
+                  'type':'bar',
+                  'name':'CR'}
+                 ]
+        return {'data':stack_trace,
+                'layout':{'plot_bgcolor':'#EAEAD2',
+                                    'paper_bgcolor':'#EAEAD2',
+                                    'hovermode':'closest',
+                                     'title':'<b>Cluster Bar Chart by type</b>',
+                                     'xaxis':{'title': '<b>Cluster Codes</b>'},
+                                     'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
+    else:
+        type_group=type_group[type_group['Regents Date']==selected_exam]
+        
+        filtered_stack_trace=[
+                {'x':type_group['Cluster'][type_group.Type=='MC'],
+                'y':type_group['counts'][type_group.Type=='MC'],
+                'type':'bar',
+                'name':'MC'},
+                 {'x':type_group['Cluster'][type_group.Type=='CR'],
+                  'y':type_group['counts'][type_group.Type=='CR'],
+                  'type':'bar',
+                  'name':'CR'}
+                 ]
+        return {'data':filtered_stack_trace,
+                'layout':{'plot_bgcolor':'#EAEAD2',
+                                    'paper_bgcolor':'#EAEAD2',
+                                    'hovermode':'closest',
+                                     'title':'<b>Cluster Bar Chart by type</b>',
+                                     'xaxis':{'title': '<b>Cluster Codes</b>'},
+                                     'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
+        
+        
 #run when called in terminal
 if __name__=='__main__':
     app.run_server()
