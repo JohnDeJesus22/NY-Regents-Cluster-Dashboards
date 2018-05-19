@@ -16,7 +16,8 @@ app=dash.Dash()
 
 #change directory and get data
 os.chdir('D:\\MathRegentsDataFiles')
-geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1')
+geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1',usecols=['ClusterTitle',
+                                        'Cluster', 'Regents Date', 'Type'])
 
 #exam options for first bar chart
 #geo['Regents Date']=pd.to_datetime(geo['Regents Date'],format='%m/%d/%Y')
@@ -48,6 +49,11 @@ app.layout=html.Div(children=[
                 
                 #DoubleBar of question types
                 dcc.Graph(id='double bar'),
+                
+                #update
+                dcc.Dropdown(id='exam_selector_two',
+                        options=exam_options,
+                        value='All Exams'),
                              
                 #Bar Chart
                 dcc.Graph(id='overall'),
@@ -67,22 +73,20 @@ style={'backgroundColor':'#EAEAD2'}
 #only seems to work if date format is unchanged. not sure why it isn't being picked up
 #here. Supposedly the label selected in drop down is inputted into the function below.
 @app.callback(Output('overall','figure'),
-              [Input('exam_selector','value')])
+              [Input('exam_selector_two','value')])
 def update_simple_bar(selected_exam):
+    
+    if selected_exam !='All Exams':
+        #group data by regents date
+        date_group=geo.groupby(['Regents Date','Cluster']).size().reset_index(name='count')
+        
+        sel_exam=date_group[date_group['Regents Date']==selected_exam]
 
-    if selected_exam != 'All Exams':
-        #data only for selected exam
-        filtered_exam=geo[geo['Regents Date']==selected_exam]
+        sel_exam['count_pct']=sel_exam['count'].apply(lambda x: x/sum(sel_exam['count']))
         
-        #question total
-        filtered_exam['freq']=filtered_exam.groupby('Cluster')['Cluster'].transform('count')
-        
-        #sort clusters alphabetically
-        filtered_exam=filtered_exam.sort_values(by=['Cluster'])
-        
-        #create trace
-        new_trace=[{'x': filtered_exam['Cluster'],
-                    'y':filtered_exam['freq'],
+         #create trace
+        new_trace=[{'x': sel_exam['Cluster'],
+                    'y':sel_exam['count_pct'],
                     'type':'bar'}]
         
         return {'data': new_trace,
@@ -90,30 +94,30 @@ def update_simple_bar(selected_exam):
                         'plot_bgcolor':'#EAEAD2',
                         'paper_bgcolor':'#EAEAD2',
                         'hovermode':'closest',
-                        'title':'<b>Cluster Bar Chart for </b>'+ selected_exam,
+                        'title':'<b>Cluster Percentage Bar Chart for </b>'+ selected_exam,
                         'xaxis':{'title': '<b>Cluster Codes</b>'},
-                        'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
+                        'yaxis':{'title': '<b>Percentage of Exam</b>'}}}
     else:
-        #get question totals
+        #get freqency
         geo['freq']=geo.groupby('Cluster')['Cluster'].transform('count')
-
-        #sort data by cluster alphabetically
-        clusters_sorted=geo.sort_values(by=['Cluster'])
         
-        #get overall trace
-        all_exams_trace=[{'x': clusters_sorted['Cluster'],
-                    'y':clusters_sorted['freq'],
+        new_geo=geo.drop_duplicates(subset=['Cluster'],keep='first')
+        
+        new_geo['freq_pct']=new_geo['freq'].apply(lambda x: x/sum(new_geo['freq']))
+        
+        new_trace=[{'x': new_geo['Cluster'],
+                    'y':new_geo['freq_pct'],
                     'type':'bar'}]
-            
-        return {'data': all_exams_trace,
+        return {'data': new_trace,
                 'layout':{
                         'plot_bgcolor':'#EAEAD2',
                         'paper_bgcolor':'#EAEAD2',
                         'hovermode':'closest',
-                        'title':'<b>Cluster Bar Chart for </b>'+ selected_exam,
+                        'title':'<b>Cluster Overall Percentage Bar Chart</b>',
                         'xaxis':{'title': '<b>Cluster Codes</b>'},
-                        'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
-            
+                        'yaxis':{'title': '<b>Percentage of All Exams</b>'}}}
+    
+       
 #line chart filter
 @app.callback(Output('line chart','figure'),
               [Input('cluster_selector','value')])
