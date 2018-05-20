@@ -96,7 +96,8 @@ def update_simple_bar(selected_exam):
                         'hovermode':'closest',
                         'title':'<b>Cluster Percentage Bar Chart for </b>'+ selected_exam,
                         'xaxis':{'title': '<b>Cluster Codes</b>'},
-                        'yaxis':{'title': '<b>Percentage of Exam</b>'}}}
+                        'yaxis':{'title': '<b>Percentage of Exam</b>',
+                                 'tickformat':'%'}}}
     else:
         #get freqency
         geo['freq']=geo.groupby('Cluster')['Cluster'].transform('count')
@@ -115,7 +116,8 @@ def update_simple_bar(selected_exam):
                         'hovermode':'closest',
                         'title':'<b>Cluster Overall Percentage Bar Chart</b>',
                         'xaxis':{'title': '<b>Cluster Codes</b>'},
-                        'yaxis':{'title': '<b>Percentage of All Exams</b>'}}}
+                        'yaxis':{'title': '<b>Percentage of All Exams</b>',
+                                 'tickformat':'%'}}}
     
        
 #line chart filter
@@ -131,22 +133,31 @@ def update_cluster_timeSeries(cluster):
     sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'],format='%m/%d/%Y')
     
     #drop duplicate dates
-    sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date'],keep='first')
+    sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date','Type'],keep='first')
 
     #sort by date
     sel_cluster=sel_cluster.sort_values(by=['Regents Date'])
+    
+    #hovertext
+    sel_cluster['hovertext']=sel_cluster.apply(lambda x:'{}, {}<br> {} questions'.format(x['Regents Date'].strftime("%b"),
+               x['Regents Date'].year, x['freq']),axis=1)
     
     #create trace
     new_trace=[{'x': sel_cluster['Regents Date'],
                 'y':sel_cluster['freq'],
                 'type':'scatter',
+                'text':sel_cluster['hovertext'],
+                'hoverinfo':'text',
                 'mode':'lines+markers'}]
     
     return {'data': new_trace,
             'layout':{'title':'<b>Line Chart of </b>'+ cluster,
                                             'hovermode':'closest',
-                                           'xaxis':{'title': '<b>Regents Exam Date</b>'},
-                                     'yaxis':{'title': '<b>Number of Questions</b>'}
+                                           'xaxis':{'title': '<b>Regents Exam Date</b>',
+                                                'tickval':sel_cluster['Regents Date'].tolist(),
+                                             'ticktext':sel_cluster['Regents Date'].tolist()},
+                                     'yaxis':{'title': '<b>Number of Questions</b>',
+                                              'range':[0,sel_cluster['freq'].max()*1.05]}
                                      }}
     
 @app.callback(Output('double bar','figure'),
@@ -159,13 +170,17 @@ def update_double_bar(selected_exam):
     type_group=type_group.sort_values(by=['Cluster'])
     
     if selected_exam =='All Exams':
+        #get overall totals of clusters in each type
+        type_group['QTypeTotals']=type_group.groupby(['Type',
+                  'Cluster'])['counts'].transform('sum')
+        
         stack_trace=[
                 {'x':type_group['Cluster'][type_group.Type=='MC'],
-                'y':type_group['counts'][type_group.Type=='MC'],
+                'y':type_group['QTypeTotals'][type_group.Type=='MC'],
                 'type':'bar',
                 'name':'MC'},
                  {'x':type_group['Cluster'][type_group.Type=='CR'],
-                  'y':type_group['counts'][type_group.Type=='CR'],
+                  'y':type_group['QTypeTotals'][type_group.Type=='CR'],
                   'type':'bar',
                   'name':'CR'}
                  ]
