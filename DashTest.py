@@ -61,7 +61,9 @@ app.layout=html.Div(children=[
                 #line chart dropdown
                 dcc.Dropdown(id='cluster_selector',
                              options=clusters,
-                             value='G-CO.C'),
+                             value=['G-CO.C'],
+                             multi=True,
+                             placeholder='Select Cluster(s)'),
                              
                 #line chart 
                 dcc.Graph(id='line chart'),
@@ -123,41 +125,42 @@ def update_simple_bar(selected_exam):
 #line chart filter
 @app.callback(Output('line chart','figure'),
               [Input('cluster_selector','value')])
-def update_cluster_timeSeries(cluster):
+def update_cluster_timeSeries(cluster_list):
+    traces=[]
+    for cluster in cluster_list:
+        #data only for selected cluster and get freq by exam date
+        sel_cluster=geo[geo['Cluster']==cluster]
+        sel_cluster['freq']=sel_cluster.groupby('Regents Date')['Regents Date'].transform('count')
     
-    #data only for selected cluster and get freq by exam date
-    sel_cluster=geo[geo['Cluster']==cluster]
-    sel_cluster['freq']=sel_cluster.groupby('Regents Date')['Regents Date'].transform('count')
-
-    #convert Regents Date column to date time
-    sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'],format='%m/%d/%Y')
+        #convert Regents Date column to date time
+        sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'],format='%m/%d/%Y')
+        
+        #drop duplicate dates
+        sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date','Type'],keep='first')
     
-    #drop duplicate dates
-    sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date','Type'],keep='first')
-
-    #sort by date
-    sel_cluster=sel_cluster.sort_values(by=['Regents Date'])
+        #sort by date
+        sel_cluster=sel_cluster.sort_values(by=['Regents Date'])
+        
+        #hovertext
+        sel_cluster['hovertext']=sel_cluster.apply(lambda x:'{}, {}<br> {} questions'.format(x['Regents Date'].strftime("%b"),
+                   x['Regents Date'].year, x['freq']),axis=1)
+        
+        #create trace
+        
+        traces.append({'x': sel_cluster['Regents Date'],
+                    'y':sel_cluster['freq'],
+                    'type':'scatter',
+                    'text':sel_cluster['hovertext'],
+                    'hoverinfo':'text',
+                    'name':cluster,
+                    'mode':'lines+markers'})
     
-    #hovertext
-    sel_cluster['hovertext']=sel_cluster.apply(lambda x:'{}, {}<br> {} questions'.format(x['Regents Date'].strftime("%b"),
-               x['Regents Date'].year, x['freq']),axis=1)
-    
-    #create trace
-    new_trace=[{'x': sel_cluster['Regents Date'],
-                'y':sel_cluster['freq'],
-                'type':'scatter',
-                'text':sel_cluster['hovertext'],
-                'hoverinfo':'text',
-                'mode':'lines+markers'}]
-    
-    return {'data': new_trace,
-            'layout':{'title':'<b>Line Chart of </b>'+ cluster,
+    return {'data': traces,
+            'layout':{'title':'<b>Cluster Line Chart </b>',
                                             'hovermode':'closest',
-                                           'xaxis':{'title': '<b>Regents Exam Date</b>',
-                                                'tickval':sel_cluster['Regents Date'].tolist(),
-                                             'ticktext':sel_cluster['Regents Date'].tolist()},
+                                           'xaxis':{'title': '<b>Regents Exam Date</b>'},
                                      'yaxis':{'title': '<b>Number of Questions</b>',
-                                              'range':[0,sel_cluster['freq'].max()*1.05]}
+                                              'range':[0,6.75]}
                                      }}
     
 @app.callback(Output('double bar','figure'),
