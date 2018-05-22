@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 #initiate app
 app=dash.Dash()
 
-#change directory and get data
+#change directory and get data with necessary columns
 os.chdir('D:\\MathRegentsDataFiles')
 geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1',usecols=['ClusterTitle',
                                         'Cluster', 'Regents Date', 'Type'])
@@ -35,27 +35,31 @@ for cluster in cluster_dict:
 #create app
 app.layout=html.Div(children=[
                 #main title
-                html.H1(children='Geometry Regents Cluster Dashboard',
+                html.H1(children='Geometry Regents Cluster Analysis Dashboard',
                         style={'textAlign':'center'}),
                       
-                #subtitle
-                html.Div(children='First Test Dashboard of Geometry Regents Cluster Analysis',
+                #subtitle description
+                html.Div(children='''Use this dashboard to gain insights on the 
+                         Geometry Regents questions.
+                         ''',
                 style={'textAlign':'center'}),
                          
-                #dropdown for simple bar chart
-                dcc.Dropdown(id='exam_selector',
+                #dropdown for double bar chart
+                html.Div(children=[dcc.Dropdown(id='exam_selector',
                         options=exam_options,
-                        value='All Exams'),
+                        value='All Exams',
+                        clearable=False),
                 
-                #DoubleBar of question types
-                dcc.Graph(id='double bar'),
+                #Double Bar of question types
+                dcc.Graph(id='double bar')]),
                 
-                #update
+                #dropdown for percentage bar
                 dcc.Dropdown(id='exam_selector_two',
                         options=exam_options,
-                        value='All Exams'),
+                        value='All Exams',
+                        clearable=False),
                              
-                #Bar Chart
+                #Percentage Bar Chart
                 dcc.Graph(id='overall'),
                 
                 #line chart dropdown
@@ -71,9 +75,63 @@ app.layout=html.Div(children=[
                 ],
 style={'backgroundColor':'#EAEAD2'}
 )
- 
-#only seems to work if date format is unchanged. not sure why it isn't being picked up
-#here. Supposedly the label selected in drop down is inputted into the function below.
+
+#filter for nested bar chart
+@app.callback(Output('double bar','figure'),
+              [Input('exam_selector','value')])
+def update_double_bar(selected_exam):
+    #create df grouped by question type,cluster, and exam
+    type_group=geo.groupby(['Type', 'Cluster', 'Regents Date']).size().reset_index(name='counts')
+    
+    #sort clusters alphabetically
+    type_group=type_group.sort_values(by=['Cluster'])
+    
+    if selected_exam =='All Exams':
+        #get overall totals of clusters in each type
+        type_group['QTypeTotals']=type_group.groupby(['Type',
+                  'Cluster'])['counts'].transform('sum')
+        
+        #create trace
+        stack_trace=[
+                {'x':type_group['Cluster'][type_group.Type=='MC'],
+                'y':type_group['QTypeTotals'][type_group.Type=='MC'],
+                'type':'bar',
+                'name':'MC'},
+                 {'x':type_group['Cluster'][type_group.Type=='CR'],
+                  'y':type_group['QTypeTotals'][type_group.Type=='CR'],
+                  'type':'bar',
+                  'name':'CR'}
+                 ]
+        
+        return {'data':stack_trace,
+                'layout':{'plot_bgcolor':'#EAEAD2',
+                                    'paper_bgcolor':'#EAEAD2',
+                                    'hovermode':'closest',
+                                     'title':'<b>Clusters By Question Type</b>',
+                                     'xaxis':{'title': '<b>Cluster Codes</b>'},
+                                     'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
+    else:
+        type_group=type_group[type_group['Regents Date']==selected_exam]
+        
+        filtered_stack_trace=[
+                {'x':type_group['Cluster'][type_group.Type=='MC'],
+                'y':type_group['counts'][type_group.Type=='MC'],
+                'type':'bar',
+                'name':'MC'},
+                 {'x':type_group['Cluster'][type_group.Type=='CR'],
+                  'y':type_group['counts'][type_group.Type=='CR'],
+                  'type':'bar',
+                  'name':'CR'}
+                 ]
+        return {'data':filtered_stack_trace,
+                'layout':{'plot_bgcolor':'#EAEAD2',
+                          'paper_bgcolor':'#EAEAD2',
+                          'hovermode':'closest',
+                          'title':'<b>Clusters by Question Typevfor </b>'+ selected_exam,
+                          'xaxis':{'title': '<b>Cluster Codes</b>'},
+                          'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
+
+#filter for simple percentage bar chart
 @app.callback(Output('overall','figure'),
               [Input('exam_selector_two','value')])
 def update_simple_bar(selected_exam):
@@ -82,11 +140,13 @@ def update_simple_bar(selected_exam):
         #group data by regents date
         date_group=geo.groupby(['Regents Date','Cluster']).size().reset_index(name='count')
         
+        #filter exam by selected date
         sel_exam=date_group[date_group['Regents Date']==selected_exam]
-
+        
+        #create percentage column
         sel_exam['count_pct']=sel_exam['count'].apply(lambda x: x/sum(sel_exam['count']))
         
-         #create trace
+        #create trace
         new_trace=[{'x': sel_exam['Cluster'],
                     'y':sel_exam['count_pct'],
                     'type':'bar'}]
@@ -104,10 +164,13 @@ def update_simple_bar(selected_exam):
         #get freqency
         geo['freq']=geo.groupby('Cluster')['Cluster'].transform('count')
         
+        #drop duplicates
         new_geo=geo.drop_duplicates(subset=['Cluster'],keep='first')
         
+        #percentage of exam column
         new_geo['freq_pct']=new_geo['freq'].apply(lambda x: x/sum(new_geo['freq']))
         
+        #create trace
         new_trace=[{'x': new_geo['Cluster'],
                     'y':new_geo['freq_pct'],
                     'type':'bar'}]
@@ -142,11 +205,11 @@ def update_cluster_timeSeries(cluster_list):
         sel_cluster=sel_cluster.sort_values(by=['Regents Date'])
         
         #hovertext
-        sel_cluster['hovertext']=sel_cluster.apply(lambda x:'{}, {}<br> {} questions'.format(x['Regents Date'].strftime("%b"),
+        sel_cluster['hovertext']=sel_cluster.apply(lambda x:
+            '{} {}<br> {} questions'.format(x['Regents Date'].strftime("%b"),
                    x['Regents Date'].year, x['freq']),axis=1)
         
-        #create trace
-        
+        #create traces
         traces.append({'x': sel_cluster['Regents Date'],
                     'y':sel_cluster['freq'],
                     'type':'scatter',
@@ -163,59 +226,6 @@ def update_cluster_timeSeries(cluster_list):
                                               'range':[0,6.75]}
                                      }}
     
-@app.callback(Output('double bar','figure'),
-              [Input('exam_selector','value')])
-def update_double_bar(selected_exam):
-    #create df grouped by question type,cluster, and exam
-    type_group=geo.groupby(['Type', 'Cluster', 'Regents Date']).size().reset_index(name='counts')
-    
-    #sort clusters alphabetically
-    type_group=type_group.sort_values(by=['Cluster'])
-    
-    if selected_exam =='All Exams':
-        #get overall totals of clusters in each type
-        type_group['QTypeTotals']=type_group.groupby(['Type',
-                  'Cluster'])['counts'].transform('sum')
-        
-        stack_trace=[
-                {'x':type_group['Cluster'][type_group.Type=='MC'],
-                'y':type_group['QTypeTotals'][type_group.Type=='MC'],
-                'type':'bar',
-                'name':'MC'},
-                 {'x':type_group['Cluster'][type_group.Type=='CR'],
-                  'y':type_group['QTypeTotals'][type_group.Type=='CR'],
-                  'type':'bar',
-                  'name':'CR'}
-                 ]
-        return {'data':stack_trace,
-                'layout':{'plot_bgcolor':'#EAEAD2',
-                                    'paper_bgcolor':'#EAEAD2',
-                                    'hovermode':'closest',
-                                     'title':'<b>Cluster Bar Chart by type</b>',
-                                     'xaxis':{'title': '<b>Cluster Codes</b>'},
-                                     'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
-    else:
-        type_group=type_group[type_group['Regents Date']==selected_exam]
-        
-        filtered_stack_trace=[
-                {'x':type_group['Cluster'][type_group.Type=='MC'],
-                'y':type_group['counts'][type_group.Type=='MC'],
-                'type':'bar',
-                'name':'MC'},
-                 {'x':type_group['Cluster'][type_group.Type=='CR'],
-                  'y':type_group['counts'][type_group.Type=='CR'],
-                  'type':'bar',
-                  'name':'CR'}
-                 ]
-        return {'data':filtered_stack_trace,
-                'layout':{'plot_bgcolor':'#EAEAD2',
-                                    'paper_bgcolor':'#EAEAD2',
-                                    'hovermode':'closest',
-                                     'title':'<b>Cluster Bar Chart by type</b>',
-                                     'xaxis':{'title': '<b>Cluster Codes</b>'},
-                                     'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
-        
-        
 #run when called in terminal
 if __name__=='__main__':
     app.run_server()
