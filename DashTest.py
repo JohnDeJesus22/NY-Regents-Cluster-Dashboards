@@ -10,14 +10,26 @@ import os
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
+import base64#for future pics of questions
 
 #initiate app
 app=dash.Dash()
 
 #change directory and get data with necessary columns
 os.chdir('D:\\MathRegentsDataFiles')
-geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1',usecols=['ClusterTitle',
+geo=pd.read_csv('PreppedGeoQuestionBreakdown - Copy.csv',encoding='latin1',usecols=['ClusterTitle',
                                         'Cluster', 'Regents Date', 'Type'])
+
+geo['Regents Date']=pd.to_datetime(geo['Regents Date'],format='%m/%d/%Y')
+
+def month_year(date):
+    month=date.strftime("%b")
+    year=date.year
+    return str(month)+' '+str(year) 
+
+geo['DateFixed']=geo['Regents Date'].apply(month_year)
+
+geo.to_csv('PreppedGeoQuestionBreakdown - Copy.csv',index=False)
 
 #exam options for first bar chart
 #geo['Regents Date']=pd.to_datetime(geo['Regents Date'],format='%m/%d/%Y')
