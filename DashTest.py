@@ -17,24 +17,23 @@ app=dash.Dash()
 
 #change directory and get data with necessary columns
 os.chdir('D:\\MathRegentsDataFiles')
-geo=pd.read_csv('PreppedGeoQuestionBreakdown - Copy.csv',encoding='latin1',usecols=['ClusterTitle',
-                                        'Cluster', 'Regents Date', 'Type'])
-
-geo['Regents Date']=pd.to_datetime(geo['Regents Date'],format='%m/%d/%Y')
+geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1',usecols=['ClusterTitle',
+                                        'Cluster', 'DateFixed','Regents Date', 'Type'])
+'''
+geo['DateFixed']=pd.to_datetime(geo['DateFixed'],format='%m/%d/%Y')
 
 def month_year(date):
     month=date.strftime("%b")
     year=date.year
     return str(month)+' '+str(year) 
 
-geo['DateFixed']=geo['Regents Date'].apply(month_year)
+geo['DateFixed']=geo['DateFixed'].apply(month_year)
 
-geo.to_csv('PreppedGeoQuestionBreakdown - Copy.csv',index=False)
-
+geo.to_csv('PreppedGeoQuestionBreakdown.csv',index=False)
+'''
 #exam options for first bar chart
-#geo['Regents Date']=pd.to_datetime(geo['Regents Date'],format='%m/%d/%Y')
 exam_options=[{'label':'All Exams','value':'All Exams'}]
-for exam in sorted(geo['Regents Date'].unique()):
+for exam in sorted(geo['DateFixed'].unique()):
     exam_options.append({'label':exam,'value':exam})
 
 #options for cluster dropdown
@@ -93,7 +92,7 @@ style={'backgroundColor':'#EAEAD2'}
               [Input('exam_selector','value')])
 def update_double_bar(selected_exam):
     #create df grouped by question type,cluster, and exam
-    type_group=geo.groupby(['Type', 'Cluster', 'Regents Date']).size().reset_index(name='counts')
+    type_group=geo.groupby(['Type', 'Cluster', 'DateFixed']).size().reset_index(name='counts')
     
     #sort clusters alphabetically
     type_group=type_group.sort_values(by=['Cluster'])
@@ -123,7 +122,7 @@ def update_double_bar(selected_exam):
                                      'xaxis':{'title': '<b>Cluster Codes</b>'},
                                      'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
     else:
-        type_group=type_group[type_group['Regents Date']==selected_exam]
+        type_group=type_group[type_group['DateFixed']==selected_exam]
         
         filtered_stack_trace=[
                 {'x':type_group['Cluster'][type_group.Type=='MC'],
@@ -139,7 +138,7 @@ def update_double_bar(selected_exam):
                 'layout':{'plot_bgcolor':'#EAEAD2',
                           'paper_bgcolor':'#EAEAD2',
                           'hovermode':'closest',
-                          'title':'<b>Clusters by Question Typevfor </b>'+ selected_exam,
+                          'title':'<b>Clusters by Question Type for </b>'+ selected_exam,
                           'xaxis':{'title': '<b>Cluster Codes</b>'},
                           'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
 
@@ -149,11 +148,11 @@ def update_double_bar(selected_exam):
 def update_simple_bar(selected_exam):
     
     if selected_exam !='All Exams':
-        #group data by regents date
-        date_group=geo.groupby(['Regents Date','Cluster']).size().reset_index(name='count')
+        #group data by DateFixed
+        date_group=geo.groupby(['DateFixed','Cluster']).size().reset_index(name='count')
         
         #filter exam by selected date
-        sel_exam=date_group[date_group['Regents Date']==selected_exam]
+        sel_exam=date_group[date_group['DateFixed']==selected_exam]
         
         #create percentage column
         sel_exam['count_pct']=sel_exam['count'].apply(lambda x: x/sum(sel_exam['count']))
@@ -208,7 +207,7 @@ def update_cluster_timeSeries(cluster_list):
         sel_cluster['freq']=sel_cluster.groupby('Regents Date')['Regents Date'].transform('count')
     
         #convert Regents Date column to date time
-        sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'],format='%m/%d/%Y')
+        sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'])
         
         #drop duplicate dates
         sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date','Type'],keep='first')
