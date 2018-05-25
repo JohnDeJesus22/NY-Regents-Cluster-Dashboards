@@ -20,17 +20,19 @@ os.chdir('D:\\MathRegentsDataFiles')
 geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1',usecols=['ClusterTitle',
                                         'Cluster', 'DateFixed','Regents Date', 'Type'])
 '''
-geo['DateFixed']=pd.to_datetime(geo['DateFixed'],format='%m/%d/%Y')
+geo['Regents Date']=pd.to_datetime(geo['Regents Date'])#,format='%m/%d/%Y')
 
 def month_year(date):
     month=date.strftime("%b")
     year=date.year
     return str(month)+' '+str(year) 
 
-geo['DateFixed']=geo['DateFixed'].apply(month_year)
+geo['DateFixed']=geo['Regents Date'].apply(month_year)
+
 
 geo.to_csv('PreppedGeoQuestionBreakdown.csv',index=False)
 '''
+
 #exam options for first bar chart
 exam_options=[{'label':'All Exams','value':'All Exams'}]
 for exam in sorted(geo['DateFixed'].unique()):
@@ -65,25 +67,26 @@ app.layout=html.Div(children=[
                 dcc.Graph(id='double bar')]),
                 
                 #dropdown for percentage bar
-                dcc.Dropdown(id='exam_selector_two',
+                html.Div(children=[dcc.Dropdown(id='exam_selector_two',
                         options=exam_options,
                         value='All Exams',
                         clearable=False),
                              
                 #Percentage Bar Chart
-                dcc.Graph(id='overall'),
+                dcc.Graph(id='overall')]),
                 
                 #line chart dropdown
-                dcc.Dropdown(id='cluster_selector',
+                html.Div(children=[dcc.Dropdown(id='cluster_selector',
                              options=clusters,
                              value=['G-CO.C'],
                              multi=True,
                              placeholder='Select Cluster(s)'),
                              
                 #line chart 
-                dcc.Graph(id='line chart'),
+                dcc.Graph(id='line chart')]),
                 
                 ],
+                         
 style={'backgroundColor':'#EAEAD2'}
 )
 
