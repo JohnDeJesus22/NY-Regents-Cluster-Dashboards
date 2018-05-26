@@ -8,8 +8,8 @@ from dash.dependencies import Input, Output
 from plotly.graph_objs import *
 import os
 import pandas as pd
-import warnings
-warnings.filterwarnings("ignore")
+#import warnings
+#warnings.filterwarnings("ignore")
 import base64#for future pics of questions
 
 #initiate app
@@ -20,6 +20,7 @@ os.chdir('D:\\MathRegentsDataFiles')
 geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1',usecols=['ClusterTitle',
                                         'Cluster', 'DateFixed','Regents Date', 'Type'])
 '''
+below done for improving display of dropdown options for bar charts
 geo['Regents Date']=pd.to_datetime(geo['Regents Date'])#,format='%m/%d/%Y')
 
 def month_year(date):
@@ -67,26 +68,25 @@ app.layout=html.Div(children=[
                 dcc.Graph(id='double bar')]),
                 
                 #dropdown for percentage bar
-                html.Div(children=[dcc.Dropdown(id='exam_selector_two',
+                dcc.Dropdown(id='exam_selector_two',
                         options=exam_options,
                         value='All Exams',
                         clearable=False),
                              
                 #Percentage Bar Chart
-                dcc.Graph(id='overall')]),
+                dcc.Graph(id='overall'),
                 
                 #line chart dropdown
-                html.Div(children=[dcc.Dropdown(id='cluster_selector',
+                dcc.Dropdown(id='cluster_selector',
                              options=clusters,
                              value=['G-CO.C'],
                              multi=True,
                              placeholder='Select Cluster(s)'),
                              
                 #line chart 
-                dcc.Graph(id='line chart')]),
+                dcc.Graph(id='line chart'),
                 
-                ],
-                         
+                ],                        
 style={'backgroundColor':'#EAEAD2'}
 )
 
@@ -220,7 +220,7 @@ def update_cluster_timeSeries(cluster_list):
         
         #hovertext
         sel_cluster['hovertext']=sel_cluster.apply(lambda x:
-            '{} {}<br> {} questions'.format(x['Regents Date'].strftime("%b"),
+          '{} {}<br> {} questions'.format(x['Regents Date'].strftime("%b"),
                    x['Regents Date'].year, x['freq']),axis=1)
         
         #create traces
@@ -232,14 +232,21 @@ def update_cluster_timeSeries(cluster_list):
                     'name':cluster,
                     'mode':'lines+markers'})
     
-    return {'data': traces,
+    if len(cluster_list)==2:
+        correlation =traces[0]['x'].corr(traces[1]['x'])
+        corr_message='The correlation is {}'.format(correlation)
+    else:
+        corr_message='Please select only 2 clusters to see correlation'
+    
+    return corr_message, {'data': traces,
             'layout':{'title':'<b>Cluster Line Chart </b>',
                                             'hovermode':'closest',
                                            'xaxis':{'title': '<b>Regents Exam Date</b>'},
                                      'yaxis':{'title': '<b>Number of Questions</b>',
                                               'range':[0,6.75]}
                                      }}
-    
+
+     
 #run when called in terminal
 if __name__=='__main__':
     app.run_server()
