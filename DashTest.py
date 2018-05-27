@@ -19,6 +19,7 @@ app=dash.Dash()
 os.chdir('D:\\MathRegentsDataFiles')
 geo=pd.read_csv('PreppedGeoQuestionBreakdown.csv',encoding='latin1',usecols=['ClusterTitle',
                                         'Cluster', 'DateFixed','Regents Date', 'Type'])
+
 '''
 below done for improving display of dropdown options for bar charts
 geo['Regents Date']=pd.to_datetime(geo['Regents Date'])#,format='%m/%d/%Y')
@@ -57,7 +58,7 @@ app.layout=html.Div(children=[
                          Geometry Regents questions.
                          ''',
                 style={'textAlign':'center'}),
-                         
+                
                 #dropdown for double bar chart
                 html.Div(children=[dcc.Dropdown(id='exam_selector',
                         options=exam_options,
@@ -67,6 +68,7 @@ app.layout=html.Div(children=[
                 #Double Bar of question types
                 dcc.Graph(id='double bar')]),
                 
+                html.Div(id='border_one',style={'border':'2px red solid'}),
                 #dropdown for percentage bar
                 dcc.Dropdown(id='exam_selector_two',
                         options=exam_options,
@@ -75,6 +77,8 @@ app.layout=html.Div(children=[
                              
                 #Percentage Bar Chart
                 dcc.Graph(id='overall'),
+                
+                html.Div(id='border_one',style={'border':'2px red solid'}),
                 
                 #line chart dropdown
                 dcc.Dropdown(id='cluster_selector',
@@ -85,6 +89,14 @@ app.layout=html.Div(children=[
                              
                 #line chart 
                 dcc.Graph(id='line chart'),
+                
+                dcc.Dropdown(id='cluster_selector_two',
+                             options=clusters,
+                             value=['G-CO.C','G-CO.B'],
+                             multi=True,
+                             placeholder='Select Cluster(s)'),
+                
+                html.Div(id='Correlation Output')
                 
                 ],                        
 style={'backgroundColor':'#EAEAD2'}
@@ -238,7 +250,7 @@ def update_cluster_timeSeries(cluster_list):
     else:
         corr_message='Please select only 2 clusters to see correlation'
     
-    return corr_message, {'data': traces,
+    return {'data': traces,
             'layout':{'title':'<b>Cluster Line Chart </b>',
                                             'hovermode':'closest',
                                            'xaxis':{'title': '<b>Regents Exam Date</b>'},
@@ -246,7 +258,37 @@ def update_cluster_timeSeries(cluster_list):
                                               'range':[0,6.75]}
                                      }}
 
-     
+@app.callback(Output(component_id='Correlation Output',component_property='children'),
+              [Input('cluster_selector_two','value')])
+def correlation_of_Dual_Timeseries(cluster_list):
+    if len(cluster_list)==2:
+        timeseries=[]
+        for cluster in cluster_list:
+            #data only for selected cluster and get freq by exam date
+            sel_cluster=geo[geo['Cluster']==cluster]
+            sel_cluster['freq']=sel_cluster.groupby('Regents Date')['Regents Date'].transform('count')
+        
+            #convert Regents Date column to date time
+            sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'])
+            
+            #drop duplicate dates
+            sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date','Type'],keep='first')
+        
+            #sort by date
+            sel_cluster=sel_cluster.sort_values(by=['Regents Date'])
+            sel_cluster=sel_cluster.set_index([[i for i in range(sel_cluster.shape[0])]])
+            
+            #create traces
+            timeseries.append(sel_cluster['freq'])
+                        
+        #calculate correlation
+        correlation =timeseries[0].corr(timeseries[1])
+        corr_message='The correlation is {}'.format(correlation)
+        
+    else:
+        corr_message='Please select only 2 clusters to see correlation between them'
+        
+    return corr_message
 #run when called in terminal
 if __name__=='__main__':
     app.run_server()
