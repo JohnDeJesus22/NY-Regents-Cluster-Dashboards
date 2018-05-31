@@ -88,8 +88,14 @@ app.layout=html.Div(children=[
                              placeholder='Select Cluster(s)'),
                              
                 #line chart 
-                dcc.Graph(id='line chart'),
+                html.Div(children=[dcc.Graph(id='line chart')],
+                                   style={'width':'50%'}),
                 
+                #for cluster bar chart correlated with time series     
+                html.Div(children=[dcc.Graph(id='bar_type_for_time_series')],
+                                   style={'width':'40%','float':'right'}),
+                                   
+                #for pandas correlation time series comparison
                 dcc.Dropdown(id='cluster_selector_two',
                              options=clusters,
                              value=['G-CO.C','G-CO.B'],
@@ -257,6 +263,26 @@ def update_cluster_timeSeries(cluster_list):
                                      'yaxis':{'title': '<b>Number of Questions</b>',
                                               'range':[0,6.75]}
                                      }}
+
+
+#function for bar chart corresponding to line chart
+@app.callback(Output('bar_type_for_time_series','figure'),
+              [Input('line chart','hoverdData')])
+def time_series_hover_bar(hoverData):
+    
+    exam_date=hoverData['points'][0]['x']
+    
+    
+    trace={'type':'bar',
+           'x':
+            'y':
+                }
+    
+    
+    return {'data':trace,
+            'layout':{'xaxis':{'title':'Question Type'},
+                      'yaxis':{'title':'Number of Questions'},
+                      'hovermode':'closest'}}
 
 @app.callback(Output(component_id='Correlation Output',component_property='children'),
               [Input('cluster_selector_two','value')])
