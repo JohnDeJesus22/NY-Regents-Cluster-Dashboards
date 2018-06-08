@@ -8,9 +8,8 @@ from dash.dependencies import Input, Output
 from plotly.graph_objs import *
 import os
 import pandas as pd
-#import warnings
-#warnings.filterwarnings("ignore")
-import base64#for future pics of questions
+from RegentsAppMarkdown import *
+#import base64 #for future pics of questions
 
 #initiate app
 app=dash.Dash()
@@ -249,13 +248,13 @@ def update_cluster_timeSeries(cluster_list):
                     'hoverinfo':'text',
                     'name':cluster,
                     'mode':'lines+markers'})
-    
+'''  
     if len(cluster_list)==2:
         correlation =traces[0]['x'].corr(traces[1]['x'])
         corr_message='The correlation is {}'.format(correlation)
     else:
         corr_message='Please select only 2 clusters to see correlation'
-    
+'''
     return {'data': traces,
             'layout':{'title':'<b>Cluster Line Chart </b>',
                                             'hovermode':'closest',
@@ -264,7 +263,7 @@ def update_cluster_timeSeries(cluster_list):
                                               'range':[0,6.75]}
                                      }}
 
-
+'''
 #function for bar chart corresponding to line chart
 @app.callback(Output('bar_type_for_time_series','figure'),
               [Input('line chart','hoverdData')])
@@ -283,6 +282,7 @@ def time_series_hover_bar(hoverData):
             'layout':{'xaxis':{'title':'Question Type'},
                       'yaxis':{'title':'Number of Questions'},
                       'hovermode':'closest'}}
+    '''
 
 @app.callback(Output(component_id='Correlation Output',component_property='children'),
               [Input('cluster_selector_two','value')])
