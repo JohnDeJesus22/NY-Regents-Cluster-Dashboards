@@ -53,13 +53,12 @@ app.layout=html.Div(children=[
                         style={'textAlign':'center'}),
                       
                 #subtitle description
-                html.Div(children='''Use this dashboard to gain insights on the 
-                         Geometry Regents questions.
-                         ''',
+                html.Div(children=dcc.Markdown(gen_description),
                 style={'textAlign':'center'}),
-                
+                         
                 #dropdown for double bar chart
-                html.Div(children=[dcc.Dropdown(id='exam_selector',
+                html.Div(children=[dcc.Markdown(nested_description),
+                        dcc.Dropdown(id='exam_selector',
                         options=exam_options,
                         value='All Exams',
                         clearable=False),
@@ -69,26 +68,28 @@ app.layout=html.Div(children=[
                 
                 html.Div(id='border_one',style={'border':'2px red solid'}),
                 #dropdown for percentage bar
-                dcc.Dropdown(id='exam_selector_two',
+                html.Div(children=[dcc.Markdown(percentage_description),
+                        dcc.Dropdown(id='exam_selector_two',
                         options=exam_options,
                         value='All Exams',
                         clearable=False),
                              
                 #Percentage Bar Chart
-                dcc.Graph(id='overall'),
+                dcc.Graph(id='overall')]),
                 
                 html.Div(id='border_one',style={'border':'2px red solid'}),
                 
                 #line chart dropdown
-                dcc.Dropdown(id='cluster_selector',
+                html.Div(children=[dcc.Markdown(time_series_description),
+                        dcc.Dropdown(id='cluster_selector',
                              options=clusters,
                              value=['G-CO.C'],
                              multi=True,
-                             placeholder='Select Cluster(s)'),
+                             placeholder='Select Cluster(s)')]),
                              
                 #line chart 
                 html.Div(children=[dcc.Graph(id='line chart')],
-                                   style={'width':'50%'}),
+                                   style={'width':'50%','float':'left'}),
                 
                 #for cluster bar chart correlated with time series     
                 html.Div(children=[dcc.Graph(id='bar_type_for_time_series')],
@@ -101,7 +102,9 @@ app.layout=html.Div(children=[
                              multi=True,
                              placeholder='Select Cluster(s)'),
                 
-                html.Div(id='Correlation Output')
+                html.Div(id='Correlation Output'),
+                
+                html.Div(dcc.Markdown(additional_info))
                 
                 ],                        
 style={'backgroundColor':'#EAEAD2'}
@@ -248,13 +251,7 @@ def update_cluster_timeSeries(cluster_list):
                     'hoverinfo':'text',
                     'name':cluster,
                     'mode':'lines+markers'})
-'''  
-    if len(cluster_list)==2:
-        correlation =traces[0]['x'].corr(traces[1]['x'])
-        corr_message='The correlation is {}'.format(correlation)
-    else:
-        corr_message='Please select only 2 clusters to see correlation'
-'''
+
     return {'data': traces,
             'layout':{'title':'<b>Cluster Line Chart </b>',
                                             'hovermode':'closest',
@@ -315,6 +312,7 @@ def correlation_of_Dual_Timeseries(cluster_list):
         corr_message='Please select only 2 clusters to see correlation between them'
         
     return corr_message
+
 #run when called in terminal
 if __name__=='__main__':
     app.run_server()
