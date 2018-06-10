@@ -260,26 +260,37 @@ def update_cluster_timeSeries(cluster_list):
                                               'range':[0,6.75]}
                                      }}
 
-'''
+
 #function for bar chart corresponding to line chart
+#6/9/18 need to fix to correctly incorporate exam date and for when exam date==None
 @app.callback(Output('bar_type_for_time_series','figure'),
-              [Input('line chart','hoverdData')])
-def time_series_hover_bar(hoverData):
+              [Input('line chart','hoverData'),
+              Input('cluster_selector','value')])
+def time_series_hover_bar(hoverData,cluster_list):
     
-    exam_date=hoverData['points'][0]['x']
+    if len(cluster_list)==1:
+        exam_date=hoverData['points'][0]['x']
+        filtered=geo[(geo.DateFixed==exam_date) & (geo.Cluster==cluster_list[0])]
+        
+        filtered=filtered.groupby(['Type']).size().reset_index('count')
+        
+        traces=[{'type':'bar',
+           'x': 'MC'
+            'y': filtered['count'][filtered.Type=='MC']
+                },
+            {'type':'bar',
+           'x': 'CR'
+            'y': filtered['count'][filtered.Type=='CR']
+                }]
     
     
-    trace={'type':'bar',
-           'x':
-            'y':
-                }
-    
-    
-    return {'data':trace,
+        return {'data':traces,
             'layout':{'xaxis':{'title':'Question Type'},
                       'yaxis':{'title':'Number of Questions'},
                       'hovermode':'closest'}}
-    '''
+    
+    return "Please select only one cluster to display question breakdown here"
+
 
 @app.callback(Output(component_id='Correlation Output',component_property='children'),
               [Input('cluster_selector_two','value')])
