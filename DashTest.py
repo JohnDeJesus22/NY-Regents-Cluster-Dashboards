@@ -50,33 +50,46 @@ for cluster in cluster_dict:
 app.layout=html.Div(children=[
                 #main title
                 html.H1(children='Geometry Regents Cluster Analysis Dashboard',
-                        style={'textAlign':'center'}),
+                        style={'textAlign':'center','font-style':'sans-serif'}),
                       
                 #subtitle description
-                html.Div(children=dcc.Markdown(gen_description),
-                style={'textAlign':'center'}),
+                html.H3(children=dcc.Markdown(gen_description),
+                style={'textAlign':'center','font-style':'sans-serif'}),
                          
+                #instructions for nested bar chart        
+                html.Div(children=dcc.Markdown(nested_description),
+                         style={'font-style':'sans-serif',
+                         'width':'50%','display':'table-cell'}),
+    
                 #dropdown for double bar chart
-                html.Div(children=[dcc.Markdown(nested_description),
-                        dcc.Dropdown(id='exam_selector',
+                html.Div(children=[dcc.Dropdown(id='exam_selector',
                         options=exam_options,
                         value='All Exams',
-                        clearable=False),
+                        clearable=False)],
+                    style={'width':'40%','display':'table-cell'}),
                 
                 #Double Bar of question types
-                dcc.Graph(id='double bar')]),
+                html.Div(dcc.Graph(id='double bar')),
                 
+                #divider
                 html.Div(id='border_one',style={'border':'2px red solid'}),
+                
+                #instructions for percentage bar chart
+                html.Div(dcc.Markdown(percentage_description),
+                         style={'font-style':'sans-serif',
+                         'width':'50%','display':'table-cell'}),
+    
                 #dropdown for percentage bar
-                html.Div(children=[dcc.Markdown(percentage_description),
-                        dcc.Dropdown(id='exam_selector_two',
+                html.Div(children=[dcc.Dropdown(id='exam_selector_two',
                         options=exam_options,
                         value='All Exams',
-                        clearable=False),
+                        clearable=False)],
+                    style={'width':'40%','display':'table-cell'}),
                              
                 #Percentage Bar Chart
-                dcc.Graph(id='overall')]),
+                html.Div(dcc.Graph(id='overall')),
                 
+                #divider
                 html.Div(id='border_one',style={'border':'2px red solid'}),
                 
                 #line chart dropdown
@@ -260,7 +273,7 @@ def update_cluster_timeSeries(cluster_list):
                                               'range':[0,6.75]}
                                      }}
 
-
+'''
 #function for bar chart corresponding to line chart
 #6/9/18 need to fix to correctly incorporate exam date and for when exam date==None
 @app.callback(Output('bar_type_for_time_series','figure'),
@@ -290,7 +303,7 @@ def time_series_hover_bar(hoverData,cluster_list):
                       'hovermode':'closest'}}
     
     return "Please select only one cluster to display question breakdown here"
-
+'''
 
 @app.callback(Output(component_id='Correlation Output',component_property='children'),
               [Input('cluster_selector_two','value')])
