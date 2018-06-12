@@ -102,11 +102,11 @@ app.layout=html.Div(children=[
                              
                 #line chart 
                 html.Div(children=[dcc.Graph(id='line chart')],
-                                   style={'width':'50%','float':'left'}),
+                                   style={'width':'60%','display':'table-cell'}),
                 
                 #for cluster bar chart correlated with time series     
                 html.Div(children=[dcc.Graph(id='bar_type_for_time_series')],
-                                   style={'width':'40%','float':'right'}),
+                                   style={'width':'30%','display':'table-cell'}),
                                    
                 #for pandas correlation time series comparison
                 dcc.Dropdown(id='cluster_selector_two',
@@ -253,7 +253,7 @@ def update_cluster_timeSeries(cluster_list):
         
         #hovertext
         sel_cluster['hovertext']=sel_cluster.apply(lambda x:
-          '{} {}<br> {} questions'.format(x['Regents Date'].strftime("%b"),
+          '<b>{} {}</b><br> {} questions'.format(x['Regents Date'].strftime("%b"),
                    x['Regents Date'].year, x['freq']),axis=1)
         
         #create traces
@@ -273,26 +273,46 @@ def update_cluster_timeSeries(cluster_list):
                                               'range':[0,6.75]}
                                      }}
 
-'''
+
 #function for bar chart corresponding to line chart
 #6/9/18 need to fix to correctly incorporate exam date and for when exam date==None
 @app.callback(Output('bar_type_for_time_series','figure'),
-              [Input('line chart','hoverData'),
+              [Input('line chart','clickData'),
               Input('cluster_selector','value')])
-def time_series_hover_bar(hoverData,cluster_list):
+def time_series_hover_bar(clickData,cluster_list):
     
-    if len(cluster_list)==1:
-        exam_date=hoverData['points'][0]['x']
+    if clickData==None and len(cluster_list)==1:
+        filtered=geo[geo.Cluster==cluster_list[0]]
+        filtered=filtered.groupby(['Type']).size().reset_index('count')
+        
+        traces=[{'type':'bar',
+           'x': 'MC',
+            'y': filtered['count'][filtered.Type=='MC']
+                },
+            {'type':'bar',
+           'x': 'CR',
+            'y': filtered['count'][filtered.Type=='CR']
+                }]
+    
+    
+        return {'data':traces,
+            'layout':{'xaxis':{'title':'Question Type'},
+                      'yaxis':{'title':'Number of Questions'},
+                      'hovermode':'closest'}}
+        
+    
+    if len(cluster_list)==1 and clickData !=None:
+        exam_date=clickData['points'][0]['x']
         filtered=geo[(geo.DateFixed==exam_date) & (geo.Cluster==cluster_list[0])]
         
         filtered=filtered.groupby(['Type']).size().reset_index('count')
         
         traces=[{'type':'bar',
-           'x': 'MC'
+           'x': 'MC',
             'y': filtered['count'][filtered.Type=='MC']
                 },
             {'type':'bar',
-           'x': 'CR'
+           'x': 'CR',
             'y': filtered['count'][filtered.Type=='CR']
                 }]
     
@@ -303,7 +323,7 @@ def time_series_hover_bar(hoverData,cluster_list):
                       'hovermode':'closest'}}
     
     return "Please select only one cluster to display question breakdown here"
-'''
+
 
 @app.callback(Output(component_id='Correlation Output',component_property='children'),
               [Input('cluster_selector_two','value')])
