@@ -281,21 +281,34 @@ def update_cluster_timeSeries(cluster_list):
               Input('cluster_selector','value')])
 def time_series_hover_bar(clickData,cluster_list):
     
+    if len(cluster_list)>1 and clickData==None:
+        filtered=geo[geo.Cluster.isin(cluster_list)]
+        counts=filtered.Type.value_counts()
+        
+        trace=[{'type':'bar',
+           'x': counts.index.values.tolist(),
+            'y':counts.tolist(),
+            'hoverinfo':'y'}]
+    
+    
+        return {'data':trace,
+            'layout':{'xaxis':{'title':'Question Type'},
+                      'yaxis':{'title':'Number of Questions'},
+                      'hovermode':'closest'}}
+        
+    
     if clickData==None and len(cluster_list)==1:
         filtered=geo[geo.Cluster==cluster_list[0]]
-        filtered=filtered.groupby(['Type']).size().reset_index('count')
+        #filtered=filtered.groupby(['Type']).size().reset_index('count')
+        counts=filtered.Type.value_counts()
         
-        traces=[{'type':'bar',
-           'x': 'MC',
-            'y': filtered['count'][filtered.Type=='MC']
-                },
-            {'type':'bar',
-           'x': 'CR',
-            'y': filtered['count'][filtered.Type=='CR']
-                }]
+        trace=[{'type':'bar',
+           'x': counts.index.values.tolist(),
+            'y':counts.tolist(),
+            'hoverinfo':'y'}]
     
     
-        return {'data':traces,
+        return {'data':trace,
             'layout':{'xaxis':{'title':'Question Type'},
                       'yaxis':{'title':'Number of Questions'},
                       'hovermode':'closest'}}
@@ -305,24 +318,20 @@ def time_series_hover_bar(clickData,cluster_list):
         exam_date=clickData['points'][0]['x']
         filtered=geo[(geo.DateFixed==exam_date) & (geo.Cluster==cluster_list[0])]
         
-        filtered=filtered.groupby(['Type']).size().reset_index('count')
-        
-        traces=[{'type':'bar',
-           'x': 'MC',
-            'y': filtered['count'][filtered.Type=='MC']
-                },
-            {'type':'bar',
-           'x': 'CR',
-            'y': filtered['count'][filtered.Type=='CR']
-                }]
+       #filtered=filtered.groupby(['Type']).size().reset_index('count')
+        counts=filtered.Type.value_counts()
+        trace=[{'type':'bar',
+           'x': counts.index.values.tolist(),
+            'y':counts.tolist(),
+            'hoverinfo':'y'}]
     
     
-        return {'data':traces,
+        return {'data':trace,
             'layout':{'xaxis':{'title':'Question Type'},
                       'yaxis':{'title':'Number of Questions'},
                       'hovermode':'closest'}}
     
-    return "Please select only one cluster to display question breakdown here"
+    
 
 
 @app.callback(Output(component_id='Correlation Output',component_property='children'),

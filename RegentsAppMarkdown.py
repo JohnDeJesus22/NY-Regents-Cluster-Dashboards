@@ -29,10 +29,9 @@ additional_info='''
 Below are additional links that you can use to further investigate these 
 questions and gain resources on them:
 
-* Question resources\n
-  [Jmap.org](http://www.jmap.org/)
+* [Geometry Common Core Standards](http://www.corestandards.org/Math/Content/HSG/)
 
-* Descriptions on Geometry Clusters and Standards
-  [Geometry Common Core Standards](http://www.corestandards.org/Math/Content/HSG/)
-
+* [Geometry Common Core Exams Site](http://www.nysedregents.org/geometryre/)
+  
+* [Question resources from Jmap.org](http://www.jmap.org/)
 '''
