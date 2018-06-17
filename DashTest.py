@@ -5,14 +5,21 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+import dash_auth
 from plotly.graph_objs import *
 import os
 import pandas as pd
 from RegentsAppMarkdown import *
 #import base64 #for future pics of questions
 
+#login info
+USERNAME_PASSWORD_PAIR=[['username','secretpassword']]
+
 #initiate app
 app=dash.Dash()
+
+#authorization
+auth=dash_auth.BasicAuth(app,USERNAME_PASSWORD_PAIR)
 
 #change directory and get data with necessary columns
 os.chdir('D:\\MathRegentsDataFiles')
@@ -261,7 +268,7 @@ def update_cluster_timeSeries(cluster_list):
                     'y':sel_cluster['freq'],
                     'type':'scatter',
                     'text':sel_cluster['hovertext'],
-                    'hoverinfo':'text',
+                    'hoverinfo':'text+name',
                     'name':cluster,
                     'mode':'lines+markers'})
 
@@ -279,9 +286,10 @@ def update_cluster_timeSeries(cluster_list):
 @app.callback(Output('bar_type_for_time_series','figure'),
               [Input('line chart','clickData'),
               Input('cluster_selector','value')])
-def time_series_hover_bar(clickData,cluster_list):
+def time_series_click_bar(clickData,cluster_list):
     
-    if len(cluster_list)>1 and clickData==None:
+    
+    if clickData==None:
         filtered=geo[geo.Cluster.isin(cluster_list)]
         counts=filtered.Type.value_counts()
         
@@ -292,33 +300,15 @@ def time_series_hover_bar(clickData,cluster_list):
     
     
         return {'data':trace,
-            'layout':{'xaxis':{'title':'Question Type'},
+            'layout':{'title':'<b>MC/CR Breakdown of<br>Selected Clusters</b>',
+                    'xaxis':{'title':'Question Type'},
                       'yaxis':{'title':'Number of Questions'},
                       'hovermode':'closest'}}
-        
     
-    if clickData==None and len(cluster_list)==1:
-        filtered=geo[geo.Cluster==cluster_list[0]]
-        #filtered=filtered.groupby(['Type']).size().reset_index('count')
-        counts=filtered.Type.value_counts()
-        
-        trace=[{'type':'bar',
-           'x': counts.index.values.tolist(),
-            'y':counts.tolist(),
-            'hoverinfo':'y'}]
-    
-    
-        return {'data':trace,
-            'layout':{'xaxis':{'title':'Question Type'},
-                      'yaxis':{'title':'Number of Questions'},
-                      'hovermode':'closest'}}
-        
-    
-    if len(cluster_list)==1 and clickData !=None:
-        exam_date=clickData['points'][0]['x']
+    else:
+        exam_date=clickData["points"][0]["x"]
         filtered=geo[(geo.DateFixed==exam_date) & (geo.Cluster==cluster_list[0])]
         
-       #filtered=filtered.groupby(['Type']).size().reset_index('count')
         counts=filtered.Type.value_counts()
         trace=[{'type':'bar',
            'x': counts.index.values.tolist(),
@@ -327,13 +317,11 @@ def time_series_hover_bar(clickData,cluster_list):
     
     
         return {'data':trace,
-            'layout':{'xaxis':{'title':'Question Type'},
+            'layout':{'title':'<b>MC/CR Breakdown of<br>Selected Clusters</b>',
+                    'xaxis':{'title':'Question Type'},
                       'yaxis':{'title':'Number of Questions'},
                       'hovermode':'closest'}}
     
-    
-
-
 @app.callback(Output(component_id='Correlation Output',component_property='children'),
               [Input('cluster_selector_two','value')])
 def correlation_of_Dual_Timeseries(cluster_list):
