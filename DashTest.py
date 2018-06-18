@@ -10,6 +10,7 @@ from plotly.graph_objs import *
 import os
 import pandas as pd
 from RegentsAppMarkdown import *
+import json
 #import base64 #for future pics of questions
 
 #login info
@@ -62,6 +63,9 @@ app.layout=html.Div(children=[
                 #subtitle description
                 html.H3(children=dcc.Markdown(gen_description),
                 style={'textAlign':'center','font-style':'sans-serif'}),
+                        
+                #divider
+                html.Div(id='border_one',style={'border':'2px blue solid'}),
                          
                 #instructions for nested bar chart        
                 html.Div(children=dcc.Markdown(nested_description),
@@ -114,15 +118,12 @@ app.layout=html.Div(children=[
                 #for cluster bar chart correlated with time series     
                 html.Div(children=[dcc.Graph(id='bar_type_for_time_series')],
                                    style={'width':'30%','display':'table-cell'}),
-                                   
-                #for pandas correlation time series comparison
-                dcc.Dropdown(id='cluster_selector_two',
-                             options=clusters,
-                             value=['G-CO.C','G-CO.B'],
-                             multi=True,
-                             placeholder='Select Cluster(s)'),
                 
-                html.Div(id='Correlation Output'),
+                #divider
+                html.Div(id='border_one',style={'border':'2px red solid'}),
+                                   
+                html.Div(html.Pre(id='json-data')),
+                                   
                 
                 html.Div(dcc.Markdown(additional_info))
                 
@@ -307,7 +308,7 @@ def time_series_click_bar(clickData,cluster_list):
     
     else:
         exam_date=clickData["points"][0]["x"]
-        filtered=geo[(geo.DateFixed==exam_date) & (geo.Cluster==cluster_list[0])]
+        filtered=geo[(geo['Regents Date']==exam_date) & (geo.Cluster==cluster_list[0])]
         
         counts=filtered.Type.value_counts()
         trace=[{'type':'bar',
@@ -321,38 +322,14 @@ def time_series_click_bar(clickData,cluster_list):
                     'xaxis':{'title':'Question Type'},
                       'yaxis':{'title':'Number of Questions'},
                       'hovermode':'closest'}}
-    
-@app.callback(Output(component_id='Correlation Output',component_property='children'),
-              [Input('cluster_selector_two','value')])
-def correlation_of_Dual_Timeseries(cluster_list):
-    if len(cluster_list)==2:
-        timeseries=[]
-        for cluster in cluster_list:
-            #data only for selected cluster and get freq by exam date
-            sel_cluster=geo[geo['Cluster']==cluster]
-            sel_cluster['freq']=sel_cluster.groupby('Regents Date')['Regents Date'].transform('count')
-        
-            #convert Regents Date column to date time
-            sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'])
-            
-            #drop duplicate dates
-            sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date','Type'],keep='first')
-        
-            #sort by date
-            sel_cluster=sel_cluster.sort_values(by=['Regents Date'])
-            sel_cluster=sel_cluster.set_index([[i for i in range(sel_cluster.shape[0])]])
-            
-            #create traces
-            timeseries.append(sel_cluster['freq'])
-                        
-        #calculate correlation
-        correlation =timeseries[0].corr(timeseries[1])
-        corr_message='The correlation is {}'.format(correlation)
-        
-    else:
-        corr_message='Please select only 2 clusters to see correlation between them'
-        
-    return corr_message
+
+#to visually check click data to determine issue with click data chart
+#interactive
+@app.callback(Output('json-data','children'),
+              [Input('line chart','clickData')])
+def jsonreveal(clickData):
+    return json.dumps(clickData,indent=2)
+
 
 #run when called in terminal
 if __name__=='__main__':
