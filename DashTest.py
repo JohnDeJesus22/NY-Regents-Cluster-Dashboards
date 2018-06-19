@@ -82,6 +82,13 @@ app.layout=html.Div(children=[
                 #Double Bar of question types
                 html.Div(dcc.Graph(id='double bar')),
                 
+                #reveal skipped clusters
+                html.Div(id='excluded-double',
+                         style={'font-style':'sans-serif',
+                         'width':'40%','display':'inline-block',
+                         'color':'blue','border': '5px solid red',
+                         'font-size':'110%','textAlign':'center'}),
+                
                 #divider
                 html.Div(id='border_one',style={'border':'2px red solid'}),
                 
@@ -99,6 +106,13 @@ app.layout=html.Div(children=[
                              
                 #Percentage Bar Chart
                 html.Div(dcc.Graph(id='overall')),
+                
+                html.Div(id='excluded-percent',
+                         style={'font-style':'sans-serif',
+                         'width':'40%','display':'inline-block',
+                         'color':'blue','border': '5px solid red',
+                         'font-size':'110%','textAlign':'center'}),
+                
                 
                 #divider
                 html.Div(id='border_one',style={'border':'2px red solid'}),
@@ -121,10 +135,8 @@ app.layout=html.Div(children=[
                 
                 #divider
                 html.Div(id='border_one',style={'border':'2px red solid'}),
-                                   
-                html.Div(html.Pre(id='json-data')),
-                                   
-                
+
+                #info for links
                 html.Div(dcc.Markdown(additional_info))
                 
                 ],                        
@@ -186,6 +198,26 @@ def update_double_bar(selected_exam):
                           'xaxis':{'title': '<b>Cluster Codes</b>'},
                           'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
 
+#function to reveal excluded clusters from selected exam date.
+@app.callback(Output('excluded-double','children'),
+              [Input('exam_selector','value')])
+def excluded_clusters_double(exam_date):
+    if exam_date !='All Exams':
+        clusters=geo.Cluster.unique().tolist()
+        filtered_by_date=geo[geo.DateFixed==exam_date]
+        chosen_date_clusters=filtered_by_date.Cluster.unique().tolist()
+        
+        if len(clusters)==len(chosen_date_clusters):
+            return 'All clusters assessed in {}.'.format(exam_date)
+        
+        else:
+            missing_clusters=[]
+            for i in clusters:
+                if i not in chosen_date_clusters:
+                    missing_clusters.append(i)
+                    return 'The following clusters were not assessed in {}: {}'.format(exam_date,
+                                                                        tuple(missing_clusters))
+
 #filter for simple percentage bar chart
 @app.callback(Output('overall','figure'),
               [Input('exam_selector_two','value')])
@@ -239,7 +271,28 @@ def update_simple_bar(selected_exam):
                         'yaxis':{'title': '<b>Percentage of All Exams</b>',
                                  'tickformat':'%'}}}
     
-       
+#function to reveal excluded clusters from selected exam date.
+@app.callback(Output('excluded-percent','children'),
+              [Input('exam_selector_two','value')])
+def excluded_clusters_percent(exam_date):
+    if exam_date !='All Exams':
+        clusters=geo.Cluster.unique().tolist()
+        filtered_by_date=geo[geo.DateFixed==exam_date]
+        chosen_date_clusters=filtered_by_date.Cluster.unique().tolist()
+        
+        if len(clusters)==len(chosen_date_clusters):
+            return 'All clusters assessed in {}.'.format(exam_date)
+        
+        else:
+            missing_clusters=[]
+            for i in clusters:
+                if i not in chosen_date_clusters:
+                    missing_clusters.append(i)
+                    return 'The following clusters were not assessed in {}: {}'.format(exam_date,
+                                                                        tuple(missing_clusters))
+
+
+      
 #line chart filter
 @app.callback(Output('line chart','figure'),
               [Input('cluster_selector','value')])
@@ -322,14 +375,6 @@ def time_series_click_bar(clickData,cluster_list):
                     'xaxis':{'title':'Question Type'},
                       'yaxis':{'title':'Number of Questions'},
                       'hovermode':'closest'}}
-
-#to visually check click data to determine issue with click data chart
-#interactive
-@app.callback(Output('json-data','children'),
-              [Input('line chart','clickData')])
-def jsonreveal(clickData):
-    return json.dumps(clickData,indent=2)
-
 
 #run when called in terminal
 if __name__=='__main__':
