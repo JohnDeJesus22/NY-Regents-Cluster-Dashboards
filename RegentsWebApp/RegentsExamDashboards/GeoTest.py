@@ -119,44 +119,43 @@ style={'backgroundColor':'#EAEAD2'}
 @app.callback(Output('double bar','figure'),
               [Input('exam_selector','value')])
 def update_double_bar(selected_exam):
-    nested_bar=func.nested_bar(geo,selected_exam)
-    return nested_bar
-
+    return func.nested_bar(geo,selected_exam)
+    
 #function to reveal excluded clusters from selected exam date.
 @app.callback(Output('excluded-double','children'),
               [Input('exam_selector','value')])
 def excluded_clusters_double(exam_date):
-    excluded=func.reveal_missing_clusters(geo,exam_date)
-    return excluded
+    return func.reveal_missing_clusters(geo,exam_date)
+    
 
 #filter for simple percentage bar chart
 @app.callback(Output('overall','figure'),
               [Input('exam_selector_two','value')])
 def update_simple_bar(selected_exam):
-    percentage_bar=func.percentage_bar(geo,selected_exam)
-    return percentage_bar
+    return func.percentage_bar(geo,selected_exam)
+    
 
 #function to reveal excluded clusters from selected exam date.
 @app.callback(Output('excluded-percent','children'),
               [Input('exam_selector_two','value')])
 def excluded_clusters_percent(exam_date):
-    excluded=func.reveal_missing_clusters(geo,exam_date)
-    return excluded
+    return func.reveal_missing_clusters(geo,exam_date)
+    
       
 #line chart filter
 @app.callback(Output('line chart','figure'),
               [Input('cluster_selector','value')])
 def update_cluster_timeSeries(cluster_list):
-    time_series=func.Cluster_Time_Series(geo,cluster_list)
-    return time_series
+    return func.Cluster_Time_Series(geo,cluster_list)
+    
 
 #function for bar chart corresponding to line chart
 @app.callback(Output('bar_type_for_time_series','figure'),
               [Input('line chart','clickData'),
               Input('cluster_selector','value')])
 def time_series_click_bar(clickData,cluster_list):
-    ts_bar=func.time_Series_Bar(geo,clickData,cluster_list)
-    return ts_bar
+    return func.time_Series_Bar(geo,clickData,cluster_list)
+    
 
 #run when called in terminal
 if __name__=='__main__':
