@@ -1,25 +1,35 @@
 # Algebra 2 Dashboard
 
-#import libraries
+# import libraries
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
-import dash_auth
 import os
 import pandas as pd
 from RegentsAppMarkdown import *
-#import base64 #for future pics of questions
+# import base64 #for future pics of questions
 
-#initiate app
-app=dash.Dash()
+# initiate app
+app = dash.Dash()
 
-#change directory and get data with necessary columns
+# change directory and get data with necessary columns
 os.chdir('D:\\MathRegentsDataFiles')
-alg_two=pd.read_csv('PreppedAlg2QuestionBreakdown.csv',encoding='latin1')#,usecols=['ClusterTitle',
-                                        #'Cluster', 'DateFixed','Regents Date', 'Type'])
+alg_two = pd.read_csv('PreppedAlg2QuestionBreakdown.csv', encoding='latin1', usecols=['ClusterTitle',
+                                        'Cluster', 'DateFixed', 'Regents Date', 'Type'])
 '''
-#below done for improving display of dropdown options for bar charts
+# below done for improving display of dropdown options for bar charts
+
+alg_two.columns=['Cluster', 'Credits', 'QuestionNumber', 'Regents Date', 'Type',
+       'ClusterTitle', 'DateFixed']
+
+Fix_dates={}
+for date in alg_two['Regents Date'].unique().tolist():
+    Fix_dates[date]=date
+Fix_dates['1-Jan']='1/1/2018'
+    
+alg_two['Regents Date']=alg_two['Regents Date'].map(Fix_dates)
+
 alg_two['Regents Date']=pd.to_datetime(alg_two['Regents Date'])#,format='%m/%d/%Y')
 
 def month_year(date):
@@ -33,37 +43,37 @@ alg_two['DateFixed']=alg_two['Regents Date'].apply(month_year)
 alg_two.to_csv('PreppedAlg2QuestionBreakdown.csv',index=False)
 '''
 
-#exam options for first bar chart
-exam_options=[{'label':'All Exams','value':'All Exams'}]
+# exam options for first bar chart
+exam_options=[{'label':'All Exams', 'value': 'All Exams'}]
 for exam in sorted(alg_two['DateFixed'].unique()):
-    exam_options.append({'label':exam,'value':exam})
+    exam_options.append({'label': exam, 'value': exam})
 
-#options for cluster dropdown
+# options for cluster dropdown
 clusters=[]
 alg_two=alg_two.sort_values(by=['Cluster'])
-cluster_dict=dict(zip(alg_two['Cluster'].unique(),alg_two['ClusterTitle'].unique()))
+cluster_dict=dict(zip(alg_two['Cluster'].unique(), alg_two['ClusterTitle'].unique()))
 for cluster in cluster_dict:
-    clusters.append({'label':cluster+'-'+ cluster_dict.get(cluster),'value':cluster})
+    clusters.append({'label': cluster+'-' + cluster_dict.get(cluster), 'value': cluster})
 
-#create app
+# create app
 app.layout=html.Div(children=[
-                #main title
+                # main title
                 html.H1(children='alg_twometry Regents Cluster Analysis Dashboard',
                         style={'textAlign':'center','font-style':'sans-serif'}),
                       
-                #subtitle description
+                # subtitle description
                 html.H3(children=dcc.Markdown(gen_description),
-                style={'textAlign':'center','font-style':'sans-serif'}),
+                style={'textAlign': 'center', 'font-style': 'sans-serif'}),
                         
-                #divider
+                # divider
                 html.Div(id='border_one',style={'border':'2px blue solid'}),
                          
-                #instructions for nested bar chart        
+                # instructions for nested bar chart
                 html.Div(children=dcc.Markdown(nested_description),
                          style={'font-style':'sans-serif',
                          'width':'50%','display':'table-cell'}),
     
-                #dropdown for double bar chart
+                # dropdown for double bar chart
                 html.Div(children=[dcc.Dropdown(id='exam_selector',
                         options=exam_options,
                         value='All Exams',
@@ -207,7 +217,7 @@ def excluded_clusters_double(exam_date):
                     return 'The following clusters were not assessed in {}: {}'.format(exam_date,
                                                                         tuple(missing_clusters))
 
-#filter for simple percentage bar chart
+# filter for simple percentage bar chart
 @app.callback(Output('overall','figure'),
               [Input('exam_selector_two','value')])
 def update_simple_bar(selected_exam):
@@ -216,37 +226,37 @@ def update_simple_bar(selected_exam):
         #group data by DateFixed
         date_group=alg_two.groupby(['DateFixed','Cluster']).size().reset_index(name='count')
         
-        #filter exam by selected date
-        sel_exam=date_group[date_group['DateFixed']==selected_exam]
+        # filter exam by selected date
+        sel_exam = date_group[date_group['DateFixed'] == selected_exam]
         
-        #create percentage column
+        # create percentage column
         sel_exam['count_pct']=sel_exam['count'].apply(lambda x: x/sum(sel_exam['count']))
         
-        #create trace
-        new_trace=[{'x': sel_exam['Cluster'],
+        # create trace
+        new_trace = [{'x': sel_exam['Cluster'],
                     'y':sel_exam['count_pct'],
                     'type':'bar'}]
         
         return {'data': new_trace,
-                'layout':{
-                        'plot_bgcolor':'#EAEAD2',
-                        'paper_bgcolor':'#EAEAD2',
-                        'hovermode':'closest',
-                        'title':'<b>Cluster Percentage Bar Chart for </b>'+ selected_exam,
-                        'xaxis':{'title': '<b>Cluster Codes</b>'},
-                        'yaxis':{'title': '<b>Percentage of Exam</b>',
-                                 'tickformat':'%'}}}
+                'layout': {
+                        'plot_bgcolor': '#EAEAD2',
+                        'paper_bgcolor': '#EAEAD2',
+                        'hovermode': 'closest',
+                        'title': '<b>Cluster Percentage Bar Chart for </b>'+ selected_exam,
+                        'xaxis': {'title': '<b>Cluster Codes</b>'},
+                        'yaxis': {'title': '<b>Percentage of Exam</b>',
+                                  'tickformat': '%'}}}
     else:
-        #get freqency
+        # get freqency
         alg_two['freq']=alg_two.groupby('Cluster')['Cluster'].transform('count')
         
-        #drop duplicates
+        # drop duplicates
         new_alg_two=alg_two.drop_duplicates(subset=['Cluster'],keep='first')
         
-        #percentage of exam column
+        # percentage of exam column
         new_alg_two['freq_pct']=new_alg_two['freq'].apply(lambda x: x/sum(new_alg_two['freq']))
         
-        #create trace
+        # create trace
         new_trace=[{'x': new_alg_two['Cluster'],
                     'y':new_alg_two['freq_pct'],
                     'type':'bar'}]
@@ -260,14 +270,14 @@ def update_simple_bar(selected_exam):
                         'yaxis':{'title': '<b>Percentage of All Exams</b>',
                                  'tickformat':'%'}}}
     
-#function to reveal excluded clusters from selected exam date.
-@app.callback(Output('excluded-percent','children'),
-              [Input('exam_selector_two','value')])
+# function to reveal excluded clusters from selected exam date.
+@app.callback(Output('excluded-percent', 'children'),
+              [Input('exam_selector_two', 'value')])
 def excluded_clusters_percent(exam_date):
-    if exam_date !='All Exams':
-        filtered_by_date=alg_two[alg_two.DateFixed==exam_date]
+    if exam_date != 'All Exams':
+        filtered_by_date=alg_two[alg_two.DateFixed == exam_date]
 
-        if len(alg_two.Cluster.unique())==len(filtered_by_date.Cluster.unique()):
+        if len(alg_two.Cluster.unique()) == len(filtered_by_date.Cluster.unique()):
             return 'All clusters assessed in {}.'.format(exam_date)
         
         else:
@@ -276,22 +286,22 @@ def excluded_clusters_percent(exam_date):
                 if i not in filtered_by_date.Cluster.unique().tolist():
                     missing_clusters.append(i)
                     return 'The following clusters were not assessed in {}: {}'.format(exam_date,
-                                                                        tuple(missing_clusters))
+                                                                                       tuple(missing_clusters))
       
-#line chart filter
-@app.callback(Output('line chart','figure'),
-              [Input('cluster_selector','value')])
-def update_cluster_timeSeries(cluster_list):
-    traces=[]
+# line chart filter
+@app.callback(Output('line chart', 'figure'),
+              [Input('cluster_selector', 'value')])
+def update_cluster_timeseries(cluster_list):
+    traces =[]
     for cluster in cluster_list:
-        #data only for selected cluster and get freq by exam date
+        # data only for selected cluster and get freq by exam date
         sel_cluster=alg_two[alg_two['Cluster']==cluster]
         sel_cluster['freq']=sel_cluster.groupby('Regents Date')['Regents Date'].transform('count')
     
-        #convert Regents Date column to date time
+        # convert Regents Date column to date time
         sel_cluster['Regents Date']=pd.to_datetime(sel_cluster['Regents Date'])
         
-        #drop duplicate dates
+        # drop duplicate dates
         sel_cluster=sel_cluster.drop_duplicates(subset=['Regents Date','Type'],keep='first')
     
         #sort by date
