@@ -7,12 +7,29 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from RegentsAppMarkdown import *
 import RegentsAppFunctions as func
+import pandas as pd
 #import base64 #for future pics of questions
 
 #initiate app
 app=dash.Dash()
 
-geo=func.load_data('D:\\MathRegentsDataFiles','PreppedGeoQuestionBreakdown.csv')
+#geo=func.load_data('D:\\MathRegentsDataFiles','PreppedGeoQuestionBreakdown.csv')
+
+from sqlalchemy import create_engine, MetaData, Table, select
+
+# establish connection
+engine = create_engine('postgresql+psycopg2://postgres:password@localhost:####/Regents Exams DataBase')
+
+# connection
+conn = engine.connect()
+
+metadata = MetaData()
+geometry = Table('Geometry',metadata, autoload=True, autoload_with=engine)
+
+# assign query to a variable with python sqlalchemy select
+results = conn.execute(select([geometry])).fetchall()
+
+geo = pd.DataFrame(results,columns=geometry.columns.keys())
 
 #exam options for first bar chart
 exam_options=[{'label':'All Exams','value':'All Exams'}]
