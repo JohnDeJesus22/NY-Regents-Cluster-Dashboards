@@ -1,6 +1,4 @@
-# algebra 1 Dashboard
-
-import os
+# Algebra 1 CC Dashboard
 
 # import libraries
 import dash
@@ -10,17 +8,19 @@ import pandas as pd
 import RegentsAppFunctions as func
 from RegentsAppMarkdown import *
 from dash.dependencies import Input, Output
-
 # import base64 #for future pics of questions
 
 # initiate app
 app = dash.Dash()
 
-# change directory and get data with necessary columns
-alg_one = func.load_data('D:\\MathRegentsDataFiles', 'PreppedAlg1QuestionBreakdown.csv')
+# load data from postgres
+alg_one=func.load_postgres('Alg1CC')
+
+# convert dates to string data type
+alg_one['Regents Date'] = alg_one['Regents Date'].astype('str')
 
 # exam options for first bar chart
-exam_options = [{'label':'All Exams', 'value':'All Exams'}]
+exam_options = [{'label': 'All Exams', 'value': 'All Exams'}]
 for exam in sorted(alg_one['DateFixed'].unique()):
     exam_options.append({'label': exam, 'value': exam})
 
@@ -34,12 +34,12 @@ for cluster in cluster_dict:
 # create app
 app.layout=html.Div(children=[
                 # main title
-                html.H1(children='alg_onemetry Regents Cluster Analysis Dashboard',
-                        style={'textAlign':'center','font-style':'sans-serif'}),
+                html.H1(children='Algebra 1 CC Regents Cluster Analysis Dashboard',
+                        style={'textAlign':'center','font-style':'Arial'}),
                       
                 # subtitle description
                 html.H3(children=dcc.Markdown(gen_description),
-                style={'textAlign': 'center', 'font-style': 'sans-serif'}),
+                style={'textAlign': 'center', 'font-style': 'Times New Roman' }),
                         
                 # divider
                 html.Div(id='border_one', style={'border': '2px blue solid'}),
@@ -61,13 +61,13 @@ app.layout=html.Div(children=[
                 
                 #reveal skipped clusters
                 html.Div(id='excluded-double',
-                         style={'font-style':'sans-serif',
-                         'width':'40%','display':'inline-block',
-                         'color':'blue','border': '5px solid red',
-                         'font-size':'110%','textAlign':'center'}),
+                         style={'font-style': 'sans-serif',
+                         'width': '40%','display':'inline-block',
+                         'color': 'blue','border': '5px solid red',
+                         'font-size': '110%','textAlign':'center'}),
                 
                 #divider
-                html.Div(id='border_one',style={'border':'2px red solid'}),
+                html.Div(id='border_one',style={'border': '2px red solid'}),
                 
                 #instructions for percentage bar chart
                 html.Div(dcc.Markdown(percentage_description),
