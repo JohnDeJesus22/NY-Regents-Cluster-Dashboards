@@ -5,10 +5,10 @@ import pandas as pd
 import os
 from sqlalchemy import create_engine, MetaData, Table, select
 
-
+pd.options.mode.chained_assignment = None
 def load_postgres(table_name):
     # create engine
-    engine = create_engine('postgresql+psycopg2://postgres:password@localhost:####/Regents Exams DataBase')
+    engine = create_engine('postgresql+psycopg2://postgres:sabalken@localhost:5432/Regents Exams DataBase')
 
     # connection
     conn = engine.connect()
@@ -26,22 +26,23 @@ def load_postgres(table_name):
 def load_data(pathname,file):
     os.chdir(pathname)
     df = pd.read_csv(file, encoding='latin1', usecols=['ClusterTitle',
-                                            'Cluster', 'DateFixed', 'Regents Date', 'Type'])
+                                                       'Cluster', 'DateFixed', 'Regents Date', 'Type'])
     
     return df
 
 
 # MC/CR Nested Bar Function
-def nested_bar(df,selected_exam):
+def nested_bar(df, selected_exam):
     # create df grouped by question type,cluster, and exam
-    type_group=df.groupby(['Type', 'Cluster', 'DateFixed','ClusterTitle']).size().reset_index(name='counts')
+    type_group = df.groupby(['Type', 'Cluster', 'DateFixed','ClusterTitle']).size().reset_index(name='counts')
     
     # sort clusters alphabetically
     type_group=type_group.sort_values(by=['Cluster'])
     
     if selected_exam == 'All Exams':
+
         # get overall totals of clusters in each type
-        type_group['QTypeTotals']= type_group.groupby(['Type',
+        type_group['QTypeTotals'] = type_group.groupby(['Type',
                     'Cluster'])['counts'].transform('sum')
 
         type_group['hovertext'] = type_group.apply(
@@ -68,8 +69,8 @@ def nested_bar(df,selected_exam):
                            'paper_bgcolor': '#EAEAD2',
                            'hovermode': 'closest',
                            'title': '<b>Clusters By Question Type</b>',
-                           'xaxis':{'title': '<b>Cluster Codes</b>'},
-                           'yaxis':{'title': '<b>Total Number of Questions</b>'}}}
+                           'xaxis': {'title': '<b>Cluster Codes</b>'},
+                           'yaxis': {'title': '<b>Total Number of Questions</b>'}}}
 
     else:
         type_group = type_group[type_group['DateFixed'] == selected_exam]
@@ -86,16 +87,16 @@ def nested_bar(df,selected_exam):
                  'text': type_group['hovertext'][type_group.Type == 'MC'],
                  'hoverinfo':'text+name'},
                 {'x': type_group['Cluster'][type_group.Type == 'CR'],
-                 'y':type_group['counts'][type_group.Type == 'CR'],
+                 'y': type_group['counts'][type_group.Type == 'CR'],
                  'type':'bar',
-                 'text':type_group['hovertext'][type_group.Type == 'CR'],
+                 'text': type_group['hovertext'][type_group.Type == 'CR'],
                  'name':'CR',
                  'hoverinfo':'text+name'}
                  ]
         return {'data': filtered_stack_trace,
                 'layout': {'plot_bgcolor': '#EAEAD2',
                            'paper_bgcolor': '#EAEAD2',
-                           'hovermode':'closest',
+                           'hovermode': 'closest',
                            'title': '<b>Clusters by Question Type for </b>'+ selected_exam,
                            'xaxis': {'title': '<b>Cluster Codes</b>'},
                            'yaxis': {'title': '<b>Total Number of Questions</b>'}}}
@@ -123,7 +124,7 @@ def percentage_bar(df,selected_exam):
     
     if selected_exam != 'All Exams':
         # group data by DateFixed
-        date_group = df.groupby(['DateFixed','Cluster','ClusterTitle']).size().reset_index(name='count')
+        date_group = df.groupby(['DateFixed','Cluster', 'ClusterTitle']).size().reset_index(name='count')
         
         # filter exam by selected date
         sel_exam = date_group[date_group['DateFixed'] == selected_exam]
@@ -149,19 +150,19 @@ def percentage_bar(df,selected_exam):
                         'title': '<b>Cluster Percentage Bar Chart for </b>' + selected_exam,
                         'xaxis': {'title': '<b>Cluster Codes</b>'},
                         'yaxis': {'title': '<b>Percentage of Exam</b>',
-                                  'tickformat':'%'}}}
+                                  'tickformat': '%'}}}
     else:
-        # get freqency
+        # get frequency
         df['freq'] = df.groupby('Cluster')['Cluster'].transform('count')
         
         # drop duplicates
-        new_df = df.drop_duplicates(subset=['Cluster'],keep='first')
+        new_df = df.drop_duplicates(subset=['Cluster'], keep='first')
         
         # percentage of exam column
-        new_df['freq_pct']=new_df['freq'].apply(lambda x: x/sum(new_df['freq']))
+        new_df['freq_pct'] = new_df['freq'].apply(lambda x: x/sum(new_df['freq']))
 
-        new_df['hovertext']=new_df.apply(lambda x:'<b>{}</b> - {}<br>'.format(x['Cluster'],
-                                                        x['ClusterTitle']), axis=1)
+        new_df['hovertext'] = new_df.apply(lambda x:'<b>{}</b> - {}<br>'.format(x['Cluster'],
+                                                                                x['ClusterTitle']), axis=1)
         # create trace
         new_trace=[{'x': new_df['Cluster'],
                     'y': new_df['freq_pct'],
@@ -181,7 +182,7 @@ def percentage_bar(df,selected_exam):
 
 
 # time series line chart
-def cluster_time_series(df,cluster_list):
+def cluster_time_series(df, cluster_list):
     traces = []
     for cluster in cluster_list:
         # data only for selected cluster and get freq by exam date
@@ -199,8 +200,8 @@ def cluster_time_series(df,cluster_list):
         
         # hovertext
         sel_cluster['hovertext'] = sel_cluster.apply(lambda x:
-          '<b>{} {}</b><br> {} questions'.format(x['Regents Date'].strftime("%b"),
-                   x['Regents Date'].year, x['freq']),axis=1)
+                    '<b>{} {}</b><br> {} questions'.format(x['Regents Date'].strftime("%b"),
+                                                           x['Regents Date'].year, x['freq']), axis=1)
         
         # create traces
         traces.append({'x': sel_cluster['Regents Date'],
@@ -227,11 +228,11 @@ def time_series_bar(df, clickData, cluster_list):
         
         trace = [{'type': 'bar',
                   'x': counts.index.values.tolist(),
-                  'y':counts.tolist(),
+                  'y': counts.tolist(),
                   'hoverinfo':'y'}]
 
         return {'data': trace,
-                'layout': {'title': '<b>MC/CR Breakdown of<br>Selected Clusters</b>',
+                'layout': {'title': '<b>MC/CR Breakdown of Selected<br>Clusters for All Exams</b>',
                            'xaxis': {'title': 'Question Type'},
                            'yaxis': {'title': 'Number of Questions'},
                            'hovermode': 'closest'}}
@@ -240,7 +241,8 @@ def time_series_bar(df, clickData, cluster_list):
         
         exam_date = clickData["points"][0]["x"]
         filtered = df[(df['Regents Date'] == exam_date) & (df.Cluster.isin(cluster_list))]
-        
+        exam_date = filtered['DateFixed'].tolist()[0]
+
         traces = []
         for cluster in cluster_list:
             second_filter = filtered[filtered.Cluster == cluster]
@@ -252,7 +254,7 @@ def time_series_bar(df, clickData, cluster_list):
                            'name': cluster})
 
         return {'data': traces,
-                'layout': {'title': '<b>MC/CR Breakdown of<br>Selected Clusters</b> '+ exam_date,
+                'layout': {'title': '<b>MC/CR Breakdown of<br>Selected Clusters<br>for </b> ' + exam_date,
                            'barmode': 'stack',
                            'xaxis': {'title': 'Question Type'},
                            'yaxis': {'title': 'Number of Questions'},
