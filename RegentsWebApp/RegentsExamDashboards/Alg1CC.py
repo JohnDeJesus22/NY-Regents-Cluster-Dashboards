@@ -14,7 +14,7 @@ from dash.dependencies import Input, Output
 app = dash.Dash()
 
 # load data from postgres
-alg_one=func.load_postgres('Alg1CC')
+alg_one = func.load_postgres('Alg1CC')
 
 # convert dates to string data type
 alg_one['Regents Date'] = alg_one['Regents Date'].astype('str')
@@ -27,7 +27,7 @@ for exam in sorted(alg_one['DateFixed'].unique()):
 # options for cluster dropdown
 clusters = []
 alg_one=alg_one.sort_values(by=['Cluster'])
-cluster_dict=dict(zip(alg_one['Cluster'].unique(), alg_one['ClusterTitle'].unique()))
+cluster_dict = dict(zip(alg_one['Cluster'].unique(), alg_one['ClusterTitle'].unique()))
 for cluster in cluster_dict:
     clusters.append({'label': cluster + '-' + cluster_dict.get(cluster), 'value': cluster})
 
@@ -35,18 +35,18 @@ for cluster in cluster_dict:
 app.layout=html.Div(children=[
                 # main title
                 html.H1(children='Algebra 1 CC Regents Cluster Analysis Dashboard',
-                        style={'textAlign':'center','font-style':'Arial'}),
+                        style={'textAlign': 'center', 'fontFamily': 'Arial'}),
                       
                 # subtitle description
                 html.H3(children=dcc.Markdown(gen_description),
-                style={'textAlign': 'center', 'font-style': 'Times New Roman' }),
+                style={'textAlign': 'center', 'fontFamily': 'Arial' }),
                         
                 # divider
                 html.Div(id='border_one', style={'border': '2px blue solid'}),
                          
                 # instructions for nested bar chart
                 html.Div(children=dcc.Markdown(nested_description),
-                         style={'font-style':'sans-serif',
+                         style={'fontFamily': 'Arial',
                          'width': '50%', 'display': 'table-cell'}),
     
                 # dropdown for double bar chart
@@ -56,68 +56,68 @@ app.layout=html.Div(children=[
                          clearable=False)],
                          style={'width': '40%', 'display': 'table-cell'}),
                 
-                #Double Bar of question types
+                # Double Bar of question types
                 html.Div(dcc.Graph(id='double bar')),
                 
-                #reveal skipped clusters
+                # reveal skipped clusters
                 html.Div(id='excluded-double',
-                         style={'font-style': 'sans-serif',
-                         'width': '40%','display':'inline-block',
-                         'color': 'blue','border': '5px solid red',
-                         'font-size': '110%','textAlign':'center'}),
+                         style={'fontFamily': 'Arial',
+                                'width': '40%', 'display': 'inline-block',
+                                'color': 'blue', 'border': '5px solid red',
+                                'font-size': '110%', 'textAlign': 'center'}),
                 
-                #divider
+                # divider
                 html.Div(id='border_one',style={'border': '2px red solid'}),
                 
-                #instructions for percentage bar chart
+                # instructions for percentage bar chart
                 html.Div(dcc.Markdown(percentage_description),
-                         style={'font-style':'sans-serif',
-                         'width':'50%','display':'table-cell'}),
+                         style={'fontFamily': 'Arial',
+                         'width': '50%', 'display': 'table-cell'}),
     
-                #dropdown for percentage bar
+                # dropdown for percentage bar
                 html.Div(children=[dcc.Dropdown(id='exam_selector_two',
-                        options=exam_options,
-                        value='All Exams',
-                        clearable=False)],
-                    style={'width':'40%','display':'table-cell'}),
+                         options=exam_options,
+                         value='All Exams',
+                         clearable=False)],
+                         style={'width': '40%','display': 'table-cell'}),
                              
-                #Percentage Bar Chart
+                # Percentage Bar Chart
                 html.Div(dcc.Graph(id='overall')),
                 
                 html.Div(id='excluded-percent',
-                         style={'font-style':'sans-serif',
-                         'width':'40%','display':'inline-block',
-                         'color':'blue','border': '5px solid red',
-                         'font-size':'110%','textAlign':'center'}),
+                         style={'fontFamily': 'Arial',
+                                'width':'40%', 'display':'inline-block',
+                                'color': 'blue', 'border': '5px solid red',
+                                'font-size': '110%','textAlign': 'center'}),
                 
                 
-                #divider
-                html.Div(id='border_one',style={'border':'2px red solid'}),
+                # divider
+                html.Div(id='border_one', style={'border': '2px red solid'}),
                 
-                #line chart dropdown
+                # line chart dropdown
                 html.Div(children=[dcc.Markdown(time_series_description),
-                        dcc.Dropdown(id='cluster_selector',
-                             options=clusters,
-                             value=['G-CO.C'],
+                                   dcc.Dropdown(id = 'cluster_selector',
+                                   options=clusters,
+                                   value=['G-CO.C'],
                              multi=True,
                              placeholder='Select Cluster(s)')]),
                              
-                #line chart 
+                # line chart
                 html.Div(children=[dcc.Graph(id='line chart')],
-                                   style={'width':'60%','display':'table-cell'}),
+                                   style={'width': '60%','display': 'table-cell'}),
                 
-                #for cluster bar chart correlated with time series     
+                # for cluster bar chart correlated with time series
                 html.Div(children=[dcc.Graph(id='bar_type_for_time_series')],
-                                   style={'width':'30%','display':'table-cell'}),
+                                   style={'width': '30%','display': 'table-cell'}),
                 
-                #divider
-                html.Div(id='border_one',style={'border':'2px red solid'}),
+                # divider
+                html.Div(id='border_one',style={'border': '2px red solid'}),
 
-                #info for links
+                # info for links
                 html.Div(dcc.Markdown(additional_info))
                 
                 ],                        
-style={'backgroundColor':'#EAEAD2'}
+                style={'backgroundColor': '#EAEAD2'}
 )
 
 
@@ -129,15 +129,15 @@ def update_double_bar(selected_exam):
 
 
 # function to reveal excluded clusters from selected exam date.
-@app.callback(Output('excluded-double','children'),
-              [Input('exam_selector','value')])
+@app.callback(Output('excluded-double', 'children'),
+              [Input('exam_selector', 'value')])
 def excluded_clusters_double(exam_date):
     return func.reveal_missing_clusters(alg_one,exam_date)
 
 
 # filter for simple percentage bar chart
-@app.callback(Output('overall','figure'),
-              [Input('exam_selector_two','value')])
+@app.callback(Output('overall', 'figure'),
+              [Input('exam_selector_two', 'value')])
 def update_simple_bar(selected_exam):
     return func.percentage_bar(alg_one, selected_exam)
 
@@ -146,7 +146,7 @@ def update_simple_bar(selected_exam):
 @app.callback(Output('excluded-percent','children'),
               [Input('exam_selector_two','value')])
 def excluded_clusters_percent(exam_date):
-    return func.reveal_missing_clusters(alg_one,exam_date)
+    return func.reveal_missing_clusters(alg_one, exam_date)
 
 
 # line chart filter
@@ -165,5 +165,5 @@ def time_series_click_bar(clickData, cluster_list):
 
 
 # run when called in terminal
-if __name__=='__main__':
+if __name__ == '__main__':
     app.run_server()
