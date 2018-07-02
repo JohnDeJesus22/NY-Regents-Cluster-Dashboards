@@ -1,9 +1,21 @@
-#File for all markdown in Regents app
+# File for all markdown in Regents app
 
 
-#bullets and arial or calibra font
-gen_description = '''
-This app displays the trends in the Geometry Regents. All charts
+#
+alg_gen_description = '''
+This app displays the trends in the Algebra 1 CC Regents. All charts
+have additional hovertext information. See the description above each chart for
+further information.
+'''
+
+alg_two_gen_description = '''
+This app displays the trends in the Algebra 2 CC Regents. All charts
+have additional hovertext information. See the description above each chart for
+further information.
+'''
+
+geo_gen_description = '''
+This app displays the trends in the Geometry CC Regents. All charts
 have additional hovertext information. See the description above each chart for
 further information.
 '''
@@ -28,13 +40,36 @@ The line chart below displays the question frequency of cluster(s) over time.
 * Clicking on an item below also displays all questions from that selected point.
 '''
 
-additional_info = '''
+alg_additional_info = '''
+Below are additional links that you can use to further investigate these 
+questions and gain resources on them:
+
+* [Algebra Common Core Standards](http://www.corestandards.org/Math/Content/HSA/introduction/)
+
+* [Algebra 1 Common Core Exams Site](http://www.nysedregents.org/algebraone/)
+  
+* [Question resources from Jmap.org](http://www.jmap.org/)
+'''
+
+alg_two_additional_info = '''
+Below are additional links that you can use to further investigate these 
+questions and gain resources on them:
+
+* [Algebra Common Core Standards](http://www.corestandards.org/Math/Content/HSA/introduction/)
+
+* [Algebra 2 Common Core Exams Site](http://www.nysedregents.org/algebratwo/)
+
+* [Question resources from Jmap.org](http://www.jmap.org/)
+
+'''
+
+geo_additional_info = '''
 Below are additional links that you can use to further investigate these 
 questions and gain resources on them:
 
 * [Geometry Common Core Standards](http://www.corestandards.org/Math/Content/HSG/)
 
 * [Geometry Common Core Exams Site](http://www.nysedregents.org/geometryre/)
-  
+
 * [Question resources from Jmap.org](http://www.jmap.org/)
 '''

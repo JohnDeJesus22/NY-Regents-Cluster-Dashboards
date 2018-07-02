@@ -26,7 +26,7 @@ for exam in sorted(alg_one['DateFixed'].unique()):
 
 # options for cluster dropdown
 clusters = []
-alg_one=alg_one.sort_values(by=['Cluster'])
+alg_one = alg_one.sort_values(by=['Cluster'])
 cluster_dict = dict(zip(alg_one['Cluster'].unique(), alg_one['ClusterTitle'].unique()))
 for cluster in cluster_dict:
     clusters.append({'label': cluster + '-' + cluster_dict.get(cluster), 'value': cluster})
@@ -38,8 +38,8 @@ app.layout=html.Div(children=[
                         style={'textAlign': 'center', 'fontFamily': 'Arial'}),
                       
                 # subtitle description
-                html.H3(children=dcc.Markdown(gen_description),
-                style={'textAlign': 'center', 'fontFamily': 'Arial' }),
+                html.H3(children=dcc.Markdown(alg_gen_description),
+                        style={'textAlign': 'center', 'fontFamily': 'Arial'}),
                         
                 # divider
                 html.Div(id='border_one', style={'border': '2px blue solid'}),
@@ -67,7 +67,7 @@ app.layout=html.Div(children=[
                                 'font-size': '110%', 'textAlign': 'center'}),
                 
                 # divider
-                html.Div(id='border_one',style={'border': '2px red solid'}),
+                html.Div(id='border_one', style={'border': '2px red solid'}),
                 
                 # instructions for percentage bar chart
                 html.Div(dcc.Markdown(percentage_description),
@@ -79,16 +79,16 @@ app.layout=html.Div(children=[
                          options=exam_options,
                          value='All Exams',
                          clearable=False)],
-                         style={'width': '40%','display': 'table-cell'}),
+                         style={'width': '40%', 'display': 'table-cell'}),
                              
                 # Percentage Bar Chart
                 html.Div(dcc.Graph(id='overall')),
                 
                 html.Div(id='excluded-percent',
                          style={'fontFamily': 'Arial',
-                                'width':'40%', 'display':'inline-block',
+                                'width': '40%', 'display': 'inline-block',
                                 'color': 'blue', 'border': '5px solid red',
-                                'font-size': '110%','textAlign': 'center'}),
+                                'font-size': '110%', 'textAlign': 'center'}),
                 
                 
                 # divider
@@ -96,25 +96,26 @@ app.layout=html.Div(children=[
                 
                 # line chart dropdown
                 html.Div(children=[dcc.Markdown(time_series_description),
-                                   dcc.Dropdown(id = 'cluster_selector',
+                                   dcc.Dropdown(id='cluster_selector',
                                    options=clusters,
                                    value=['G-CO.C'],
                              multi=True,
-                             placeholder='Select Cluster(s)')]),
+                             placeholder='Select Cluster(s)')],
+                         style={'fontFamily': 'Arial'}),
                              
                 # line chart
                 html.Div(children=[dcc.Graph(id='line chart')],
-                                   style={'width': '60%','display': 'table-cell'}),
+                         style={'width': '60%', 'display': 'table-cell'}),
                 
                 # for cluster bar chart correlated with time series
                 html.Div(children=[dcc.Graph(id='bar_type_for_time_series')],
-                                   style={'width': '30%','display': 'table-cell'}),
+                         style={'width': '30%', 'display': 'table-cell'}),
                 
                 # divider
                 html.Div(id='border_one',style={'border': '2px red solid'}),
 
                 # info for links
-                html.Div(dcc.Markdown(additional_info))
+                html.Div(dcc.Markdown(alg_additional_info), style={'fontFamily': 'Arial'})
                 
                 ],                        
                 style={'backgroundColor': '#EAEAD2'}
@@ -122,17 +123,17 @@ app.layout=html.Div(children=[
 
 
 # filter for nested bar chart
-@app.callback(Output('double bar','figure'),
-              [Input('exam_selector','value')])
+@app.callback(Output('double bar', 'figure'),
+              [Input('exam_selector', 'value')])
 def update_double_bar(selected_exam):
-    return func.nested_bar(alg_one,selected_exam)
+    return func.nested_bar(alg_one, selected_exam)
 
 
 # function to reveal excluded clusters from selected exam date.
 @app.callback(Output('excluded-double', 'children'),
               [Input('exam_selector', 'value')])
 def excluded_clusters_double(exam_date):
-    return func.reveal_missing_clusters(alg_one,exam_date)
+    return func.reveal_missing_clusters(alg_one, exam_date)
 
 
 # filter for simple percentage bar chart
@@ -143,21 +144,21 @@ def update_simple_bar(selected_exam):
 
 
 # function to reveal excluded clusters from selected exam date.
-@app.callback(Output('excluded-percent','children'),
-              [Input('exam_selector_two','value')])
+@app.callback(Output('excluded-percent', 'children'),
+              [Input('exam_selector_two', 'value')])
 def excluded_clusters_percent(exam_date):
     return func.reveal_missing_clusters(alg_one, exam_date)
 
 
 # line chart filter
-@app.callback(Output('line chart','figure'),
-              [Input('cluster_selector','value')])
+@app.callback(Output('line chart', 'figure'),
+              [Input('cluster_selector', 'value')])
 def update_cluster_timeseries(cluster_list):
     return func.cluster_time_series(alg_one, cluster_list)
 
 
 # function for bar chart corresponding to line chart
-@app.callback(Output('bar_type_for_time_series','figure'),
+@app.callback(Output('bar_type_for_time_series', 'figure'),
               [Input('line chart', 'clickData'),
               Input('cluster_selector', 'value')])
 def time_series_click_bar(clickData, cluster_list):

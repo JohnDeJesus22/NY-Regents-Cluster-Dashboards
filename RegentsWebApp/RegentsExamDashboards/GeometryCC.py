@@ -8,6 +8,9 @@ from dash.dependencies import Input, Output
 import dash_auth
 import RegentsAppFunctions as func
 from RegentsAppMarkdown import *
+import pandas as pd
+import os
+from sqlalchemy import create_engine, MetaData, Table, select
 # import base64 #for future pics of questions
 
 # login info
@@ -20,7 +23,10 @@ app = dash.Dash()
 auth = dash_auth.BasicAuth(app , USERNAME_PASSWORD_PAIR)
 
 # load data from postgres
-geo=func.load_postgres('Geometry')
+geo = func.load_postgres('Geometry')
+
+# convert dates back to string
+geo['Regents Date'] = geo['Regents Date'].astype('str')
 
 # exam options for first bar chart
 exam_options=[{'label':'All Exams','value':'All Exams'}]
@@ -38,18 +44,18 @@ for cluster in cluster_dict:
 app.layout=html.Div(children=[
                 #main title
                 html.H1(children='Geometry Regents Cluster Analysis Dashboard',
-                        style={'textAlign':'center','font-style':'sans-serif'}),
+                        style={'textAlign':'center','fontFamily': 'Arial'}),
                       
                 #subtitle description
-                html.H3(children=dcc.Markdown(gen_description),
-                style={'textAlign':'center','font-style':'sans-serif'}),
+                html.H3(children=dcc.Markdown(geo_gen_description),
+                style={'textAlign':'center','fontFamily': 'Arial'}),
                         
                 #divider
                 html.Div(id='border_one',style={'border':'2px blue solid'}),
                          
                 #instructions for nested bar chart        
                 html.Div(children=dcc.Markdown(nested_description),
-                         style={'font-style':'sans-serif',
+                         style={'fontFamily': 'Arial',
                          'width':'50%','display':'table-cell'}),
     
                 # dropdown for double bar chart
@@ -64,7 +70,7 @@ app.layout=html.Div(children=[
                 
                 # reveal skipped clusters
                 html.Div(id='excluded-double',
-                         style={'font-style':'sans-serif',
+                         style={'fontFamily': 'Arial',
                                 'width':'40%','display':'inline-block',
                                 'color':'blue','border': '5px solid red',
                                 'font-size':'110%','textAlign':'center'}),
@@ -74,7 +80,7 @@ app.layout=html.Div(children=[
                 
                 # instructions for percentage bar chart
                 html.Div(dcc.Markdown(percentage_description),
-                         style={'font-style':'sans-serif',
+                         style={'fontFamily': 'Arial',
                          'width': '50%', 'display' : 'table-cell'}),
     
                 # dropdown for percentage bar
@@ -88,7 +94,7 @@ app.layout=html.Div(children=[
                 html.Div(dcc.Graph(id='overall')),
                 
                 html.Div(id='excluded-percent',
-                         style={'font-style':'sans-serif',
+                         style={'fontFamily': 'Arial',
                          'width':'40%','display':'inline-block',
                          'color':'blue','border': '5px solid red',
                          'font-size':'110%','textAlign':'center'}),
@@ -103,21 +109,22 @@ app.layout=html.Div(children=[
                              options=clusters,
                              value=['G-CO.C'],
                              multi=True,
-                             placeholder='Select Cluster(s)')]),
+                             placeholder='Select Cluster(s)')],
+                         style={'fontFamily': 'Arial'}),
                              
                 #line chart 
                 html.Div(children=[dcc.Graph(id='line chart')],
                                    style={'width':'60%','display':'table-cell'}),
                 
-                #for cluster bar chart correlated with time series     
+                # for cluster bar chart correlated with time series
                 html.Div(children=[dcc.Graph(id='bar_type_for_time_series')],
                                    style={'width':'30%','display':'table-cell'}),
                 
-                #divider
+                # divider
                 html.Div(id='border_one',style={'border':'2px red solid'}),
 
-                #info for links
-                html.Div(dcc.Markdown(additional_info))
+                # info for links
+                html.Div(dcc.Markdown(geo_additional_info), style={'fontFamily': 'Arial'})
                 
                 ],                        
 style={'backgroundColor': '#EAEAD2'}
@@ -156,7 +163,7 @@ def excluded_clusters_percent(exam_date):
 @app.callback(Output('line chart', 'figure'),
               [Input('cluster_selector', 'value')])
 def update_cluster_timeSeries(cluster_list):
-    return func.cluster_time_series(geo,cluster_list)
+    return func.cluster_time_series(geo, cluster_list)
 
 
 # function for bar chart corresponding to line chart
