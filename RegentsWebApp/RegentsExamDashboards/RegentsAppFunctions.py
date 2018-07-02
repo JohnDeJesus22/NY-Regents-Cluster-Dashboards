@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, MetaData, Table, select
 pd.options.mode.chained_assignment = None
 def load_postgres(table_name):
     # create engine
-    engine = create_engine('postgresql+psycopg2://postgres:sabalken@localhost:5432/Regents Exams DataBase')
+    engine = create_engine('postgresql+psycopg2://postgres:password@localhost:####/Regents Exams DataBase')
 
     # connection
     conn = engine.connect()
