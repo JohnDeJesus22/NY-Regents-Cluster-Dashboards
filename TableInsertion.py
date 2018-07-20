@@ -91,3 +91,71 @@ df_check = pd.DataFrame(results, columns=sql_table.columns.keys())
 df_check.shape
 
 # successful
+##############################################################################################
+#geometry
+
+geo_csv=pd.read_csv('PreppedGeoQuestionBreakdown.csv', encoding='latin1')
+geo_2018=geo_csv[geo_csv.DateFixed=='18-Jun']
+geo=load_postgres('Geometry')
+
+geo_2018.loc[:,'DateFixed']='Jun-18'
+
+# create engine
+engine = create_engine('postgresql+psycopg2://postgres:password@localhost:####/Regents Exams DataBase')
+
+    # connection
+conn = engine.connect()
+
+metadata = MetaData()
+sql_table = Table('Geometry', metadata, autoload=True, autoload_with=engine)
+sql_columns=sql_table.columns.keys()
+
+rows = []
+for i in range(324,359):
+    row=geo_2018.iloc[i-324,:].values.tolist()
+    row=[str(x) for x in row]
+    row.insert(0, str(i))
+    rows.append(dict(zip(sql_columns,row)))
+
+# insert data into table
+conn.execute(sql_table.insert(),rows)
+
+# check results of insertion
+results = conn.execute(select([sql_table])).fetchall()
+df_check = pd.DataFrame(results, columns=sql_table.columns.keys())
+df_check.shape
+
+#################################################################################################
+# Algebra 2
+
+algt_csv=pd.read_csv('PreppedAlg2QuestionBreakdown.csv', encoding='latin1')
+algt_2018=algt_csv[algt_csv.DateFixed=='Jun-18']
+algt=load_postgres('Alg2CC')
+
+
+# create engine
+engine = create_engine('postgresql+psycopg2://postgres:password@localhost:####/Regents Exams DataBase')
+
+    # connection
+conn = engine.connect()
+
+metadata = MetaData()
+sql_table = Table('Alg2CC', metadata, autoload=True, autoload_with=engine)
+sql_columns=sql_table.columns.keys()
+
+rows = []
+for i in range(223,260):
+    row=algt_2018.iloc[i-223,:].values.tolist()
+    row=[str(x) for x in row]
+    row.insert(0, str(i))
+    rows.append(dict(zip(sql_columns,row)))
+
+# insert data into table
+conn.execute(sql_table.insert(),rows)
+
+# check results of insertion
+results = conn.execute(select([sql_table])).fetchall()
+df_check = pd.DataFrame(results, columns=sql_table.columns.keys())
+df_check.shape
+
+# successful
