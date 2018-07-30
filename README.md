@@ -1,4 +1,4 @@
-# This Repo is for the analysis of the Math NY Regents Exam Questions
+# Understanding the Math Regents to Find Time for Real Learning in the School Year
 The math regents exams assess a variety of topics per subject. Due to time constraints, student performance, teacher level, and class time lost due to unexpected events teachers can not cover all the material for students to obtain mastery of each topic. More importantly, the internal need to cover these topics often leads to the sacrifice of teaching topics in a project or real-life based manner. To provide this opportunity to teachers, I have collected the question data publicly provided on each regents exam and uploaded it to Postgresql. 
 <br/>
 Currently I am performing EDA on the Geometry Regents to obtain answers to the following questions:
